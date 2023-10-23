@@ -17,7 +17,7 @@ Before deploying this ARM template, you must have the following:
 
 You can deploy this ARM template to your Azure subscription with the following button:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarkhoiland%2Faoai-private-networking%2Ftree%2Fv1-updates%2Faoai-private.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarkhoiland%2Faoai-private-networking%2Fv1-updates%2Ftemplates%2Faoai-private.json)
 
 Clicking on the "Deploy to Azure" button will take you to the Azure Portal, where you can fill in the required parameters and deploy the ARM template.
 
