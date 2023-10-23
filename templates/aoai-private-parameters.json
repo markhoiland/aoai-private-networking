@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "northcentralus"
+        },
+        "virtualNetworkName": {
+            "value": "vnet-aoai-test-01"
+        },
+        "virtualNetworkAddressPrefix": {
+            "value": "10.0.0.0/16"
+        },
+        "subnetName": {
+            "value": "private-endpoint-01"
+        },
+        "subnetAddressPrefix": {
+            "value": "10.0.0.0/24"
+        },
+        "openaiName": {
+            "value": "aoai-test-01"
+        },
+        "storageAccountName": {
+            "value": "staoaitest01"
+        },
+        "storageAccountPrivateEndpointName": {
+            "value": "mystorageaccountendpoint"
+        },
+        "cognitiveServicesName": {
+            "value": "cog-aoai-test-01"
+        },
+        "cognitiveServicesPrivateEndpointName": {
+            "value": "mycognitiveservicesendpoint"
+        },
+        "functionAppName": {
+            "value": "func-aoai-test-01"
+        },
+        "functionAppPrivateEndpointName": {
+            "value": "myfunctionappendpoint"
+        },
+        "logicAppName": {
+            "value": "logapp-aoai-test-01"
+        },
+        "logicAppPrivateEndpointName": {
+            "value": "mylogicappendpoint"
+        }
+    }
+}
