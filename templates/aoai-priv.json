@@ -1,0 +1,263 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "northcentralus",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "vnet-aoai-test-01",
+            "metadata": {
+                "description": "Name of the virtual network."
+            }
+        },
+        "virtualNetworkAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "IP Address Prefix of the virtual network."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "pep-01",
+            "metadata": {
+                "description": "Name of the subnet."
+            }
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "IP Address Prefix of the virtual network."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "staoaitest01",
+            "metadata": {
+                "description": "Name of the storage account."
+            }
+        },
+        "cognitiveServicesName": {
+            "type": "string",
+            "defaultValue": "cog-aoai-test-01",
+            "metadata": {
+                "description": "Name of the cognitive services account."
+            }
+        },
+        "functionAppName": {
+            "type": "string",
+            "defaultValue": "func-aoai-test-01",
+            "metadata": {
+                "description": "Name of the function app."
+            }
+        },
+        "logicAppName": {
+            "type": "string",
+            "defaultValue": "logapp-aoai-test-01",
+            "metadata": {
+                "description": "Name of the logic app."
+            }
+        }
+    },
+    "variables": {
+        "virtualNetworkAddressPrefix": "10.0.0.0/16",
+        "subnetAddressPrefix": "10.0.0.0/24"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('virtualNetworkAddressPrefix')]"
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "subnets",
+                    "apiVersion": "2021-02-01",
+                    "name": "[parameters('subnetName')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                    ],
+                    "properties": {
+                        "addressPrefix": "[parameters('subnetAddressPrefix')]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'), '/subnets/', parameters('subnetName'))]",
+                            "action": "Allow"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2021-04-30-preview",
+            "name": "[parameters('cognitiveServicesName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "S0"
+            },
+            "kind": "TextAnalytics",
+            "properties": {
+                "networkAcls": {
+                    "defaultAction": "Deny",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'), '/subnets/', parameters('subnetName'))]",
+                            "action": "Allow"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('functionAppName')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp",
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'app-name')]"
+            },
+            "resources": [
+                {
+                    "type": "config",
+                    "apiVersion": "2021-02-01",
+                    "name": "web",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', parameters('functionAppName'))]"
+                    ],
+                    "properties": {
+                        "virtualNetwork": {
+                            "Id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                            "SubnetResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'), '/subnets/', parameters('subnetName'))]"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2021-06-01-preview",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "state": "Enabled"
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Logic/workflows/triggers",
+                    "apiVersion": "2021-06-01-preview",
+                    "name": "manual",
+                    "dependsOn": [
+                        "[concat('Microsoft.Logic/workflows/', parameters('logicAppName'))]"
+                    ],
+                    "properties": {
+                        "type": "Request",
+                        "kind": "Http",
+                        "inputs": {
+                            "schema": {
+                                "properties": {
+                                    "message": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "recurrence": {
+                            "frequency": "Minute",
+                            "interval": 1
+                        },
+                        "workflowResourceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2021-02-01",
+            "name": "aoai-private-endpoint",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat('Microsoft.CognitiveServices/accounts/', parameters('cognitiveServicesName'))]",
+                "[concat('Microsoft.Web/sites/', parameters('functionAppName'))]",
+                "[concat('Microsoft.Logic/workflows/', parameters('logicAppName'))]"
+            ],
+            "properties": {
+                "subnet": {
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'), '/subnets/', parameters('subnetName'))]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "aoai-storage-account",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "aoai-cognitive-services",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('cognitiveServicesName'))]",
+                            "groupIds": [
+                                "textanalytics"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "aoai-function-app",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+                            "groupIds": [
+                                "scm"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "aoai-logic-app",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+                            "groupIds": [
+                                "logicApp"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

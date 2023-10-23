@@ -1,0 +1,466 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "northcentralus",
+            "metadata": {
+                "description": "Region where all resources will be deployed."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "vnet-aoai-test-01",
+            "metadata": {
+                "description": "The name of the virtual network."
+            }
+        },
+        "virtualNetworkAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "The address prefix for the virtual network."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "private-endpoint-01",
+            "metadata": {
+                "description": "Name of the subnet."
+            }
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "IP Address Prefix of the virtual network."
+            }
+        },
+        "openaiName": {
+            "type": "string",
+            "defaultValue": "aoai-test-01",
+            "metadata": {
+                "description": "The name of the OpenAI resource."
+            }
+        },
+        "openaiPrivateEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the private endpoint for the OpenAI resource."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "staoaitest01",
+            "metadata": {
+                "description": "The name of the storage account."
+            }
+        },
+        "storageAccountPrivateEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the private endpoint for the storage account."
+            }
+        },
+        "cognitiveServicesName": {
+            "type": "string",
+            "defaultValue": "cog-aoai-test-01",
+            "metadata": {
+                "description": "The name of the Cognitive Services resource."
+            }
+        },
+        "cognitiveServicesPrivateEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the private endpoint for the Cognitive Services resource."
+            }
+        },
+        "functionAppName": {
+            "type": "string",
+            "defaultValue": "func-aoai-test-01",
+            "metadata": {
+                "description": "The name of the Function App."
+            }
+        },
+        "functionAppPrivateEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the private endpoint for the Function App."
+            }
+        },
+        "logicAppName": {
+            "type": "string",
+            "defaultValue": "logapp-aoai-test-01",
+            "metadata": {
+                "description": "The name of the Logic App."
+            }
+        },
+        "logicAppPrivateEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the private endpoint for the Logic App."
+            }
+        }
+    },
+    "variables": {
+        "virtualNetworkSubnetName": "default",
+        "openaiSubnetName": "openai",
+        "storageAccountSubnetName": "storage",
+        "cognitiveServicesSubnetName": "cognitiveservices",
+        "functionAppSubnetName": "functionapp",
+        "logicAppSubnetName": "logicapp",
+        "virtualNetworkSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressPrefix'), '/24')]",
+        "openaiSubnetAddressPrefix": "10.0.1.0/24",
+        "storageAccountSubnetAddressPrefix": "10.0.2.0/24",
+        "cognitiveServicesSubnetAddressPrefix": "10.0.3.0/24",
+        "functionAppSubnetAddressPrefix": "10.0.4.0/24",
+        "logicAppSubnetAddressPrefix": "10.0.5.0/24",
+        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "virtualNetworkSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('virtualNetworkSubnetName'))]",
+        "subnetId": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName'))]",
+        "openaiSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('openaiSubnetName'))]",
+        "storageAccountSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('storageAccountSubnetName'))]",
+        "cognitiveServicesSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('cognitiveServicesSubnetName'))]",
+        "functionAppSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('functionAppSubnetName'))]",
+        "logicAppSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('logicAppSubnetName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('virtualNetworkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('virtualNetworkSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('virtualNetworkSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('openaiSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('openaiSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('storageAccountSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('storageAccountSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('cognitiveServicesSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('cognitiveServicesSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('functionAppSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('functionAppSubnetAddressPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('logicAppSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('logicAppSubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.OpenAI/openais",
+            "apiVersion": "2021-06-01-preview",
+            "name": "[parameters('openaiName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "dav4",
+                "tier": "Standard"
+            },
+            "properties": {},
+            "resources": [
+                {
+                    "type": "privateEndpoints",
+                    "apiVersion": "2021-02-01",
+                    "name": "[parameters('openaiPrivateEndpointName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "subnet": {
+                            "id": "[variables('openaiSubnetId')]"
+                        },
+                        "privateLinkServiceConnections": [
+                            {
+                                "name": "openai",
+                                "properties": {
+                                    "privateLinkServiceId": "[resourceId('Microsoft.OpenAI/openais', parameters('openaiName'))]",
+                                    "groupIds": [
+                                        "openai"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {},
+            "resources": [
+                {
+                    "type": "privateEndpoints",
+                    "apiVersion": "2021-02-01",
+                    "name": "[parameters('storageAccountPrivateEndpointName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "subnet": {
+                            "id": "[variables('storageAccountSubnetId')]"
+                        },
+                        "privateLinkServiceConnections": [
+                            {
+                                "name": "storage",
+                                "properties": {
+                                    "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                                    "groupIds": [
+                                        "blob"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.CognitiveServices/accounts",
+            "apiVersion": "2021-04-30-preview",
+            "name": "[parameters('cognitiveServicesName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "S0",
+                "tier": "Standard"
+            },
+            "kind": "TextAnalytics",
+            "properties": {},
+            "resources": [
+                {
+                    "type": "privateEndpoints",
+                    "apiVersion": "2021-02-01",
+                    "name": "[parameters('cognitiveServicesPrivateEndpointName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "subnet": {
+                            "id": "[variables('cognitiveServicesSubnetId')]"
+                        },
+                        "privateLinkServiceConnections": [
+                            {
+                                "name": "cognitiveservices",
+                                "properties": {
+                                    "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('cognitiveServicesName'))]",
+                                    "groupIds": [
+                                        "cognitiveservices"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('functionAppName')]",
+            "location": "[parameters('location')]",
+            "kind": "functionapp",
+            "properties": {},
+            "resources": [
+                {
+                    "type": "privateEndpoints",
+                    "apiVersion": "2021-02-01",
+                    "name": "[parameters('functionAppPrivateEndpointName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "subnet": {
+                            "id": "[variables('functionAppSubnetId')]"
+                        },
+                        "privateLinkServiceConnections": [
+                            {
+                                "name": "functionapp",
+                                "properties": {
+                                    "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+                                    "groupIds": [
+                                        "functionapp"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('logicAppName')]",
+            "location": "[parameters('location')]",
+            "properties": {},
+            "resources": [
+                {
+                    "type": "privateEndpoints",
+                    "apiVersion": "2021-02-01",
+                    "name": "[parameters('logicAppPrivateEndpointName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                        "subnet": {
+                            "id": "[variables('logicAppSubnetId')]"
+                        },
+                        "privateLinkServiceConnections": [
+                            {
+                                "name": "logicapp",
+                                "properties": {
+                                    "privateLinkServiceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+                                    "groupIds": [
+                                        "logicapp"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com')]",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[variables('virtualNetworkId')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('openaiPrivateEndpointName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateEndpoint": {
+                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('openaiPrivateEndpointName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('openaiPrivateEndpointName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('storageAccountPrivateEndpointName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateEndpoint": {
+                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('storageAccountPrivateEndpointName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('storageAccountPrivateEndpointName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('cognitiveServicesPrivateEndpointName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateEndpoint": {
+                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('cognitiveServicesPrivateEndpointName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('cognitiveServicesPrivateEndpointName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('functionAppPrivateEndpointName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateEndpoint": {
+                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('functionAppPrivateEndpointName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('functionAppPrivateEndpointName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('logicAppPrivateEndpointName'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateEndpoint": {
+                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('logicAppPrivateEndpointName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('logicAppPrivateEndpointName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "openaiEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('openaiPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "storageAccountEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('storageAccountPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "cognitiveServicesEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('cognitiveServicesPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "functionAppEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('functionAppPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "logicAppEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('logicAppPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        }
+    }
+}
