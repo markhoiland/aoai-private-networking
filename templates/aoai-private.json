@@ -325,15 +325,19 @@
         {
             "type": "Microsoft.Network/privateDnsZones",
             "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com')]",
-            "location": "[parameters('location')]",
+            "name": "[string('privatelink.blob.core.windows.net')]",
+            "location": "global",
             "properties": {}
         },
         {
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
             "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'))]",
+            "name": "[concat(string('privatelink.blob.core.windows.net'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[string('privatelink.blob.core.windows.net')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
             "properties": {
                 "virtualNetwork": {
                     "id": "[variables('virtualNetworkId')]"
