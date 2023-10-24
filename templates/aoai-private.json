@@ -153,7 +153,10 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OpenAI/openais', parameters('openaiName'))]"
+                    ]
                 }
             ]
         },
@@ -189,7 +192,10 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                    ]
                 }
             ]
         },
@@ -225,7 +231,10 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('cognitiveServicesName'))]"
+                    ]
                 }
             ]
         },
@@ -257,7 +266,10 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+                    ]
                 }
             ]
         },
@@ -288,7 +300,10 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]"
+                    ]
                 }
             ]
         },
