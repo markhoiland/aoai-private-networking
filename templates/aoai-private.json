@@ -44,23 +44,11 @@
                 "description": "The name of the OpenAI resource."
             }
         },
-        "openaiPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the OpenAI resource."
-            }
-        },
         "storageAccountName": {
             "type": "string",
             "defaultValue": "staoaitest01",
             "metadata": {
                 "description": "The name of the storage account."
-            }
-        },
-        "storageAccountPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the storage account."
             }
         },
         "cognitiveServicesName": {
@@ -70,12 +58,6 @@
                 "description": "The name of the Cognitive Services resource."
             }
         },
-        "cognitiveServicesPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the Cognitive Services resource."
-            }
-        },
         "functionAppName": {
             "type": "string",
             "defaultValue": "func-aoai-test-01",
@@ -83,23 +65,11 @@
                 "description": "The name of the Function App."
             }
         },
-        "functionAppPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the Function App."
-            }
-        },
         "logicAppName": {
             "type": "string",
             "defaultValue": "logapp-aoai-test-01",
             "metadata": {
                 "description": "The name of the Logic App."
-            }
-        },
-        "logicAppPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the Logic App."
             }
         }
     },
@@ -325,6 +295,28 @@
         {
             "type": "Microsoft.Network/privateDnsZones",
             "apiVersion": "2018-09-01",
+            "name": "[string('privatelink.openai.azure.com')]",
+            "location": "global",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(string('privatelink.openai.azure.com'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
+            "location": "global",
+            "dependsOn": [
+                "[string('privatelink.openai.azure.com')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[variables('virtualNetworkId')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
             "name": "[string('privatelink.blob.core.windows.net')]",
             "location": "global",
             "properties": {}
@@ -333,7 +325,7 @@
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
             "apiVersion": "2018-09-01",
             "name": "[concat(string('privatelink.blob.core.windows.net'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
-            "location": "[parameters('location')]",
+            "location": "global",
             "dependsOn": [
                 "[string('privatelink.blob.core.windows.net')]",
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
@@ -345,9 +337,53 @@
             }
         },
         {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[string('privatelink.search.windows.net')]",
+            "location": "global",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(string('privatelink.search.windows.net'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
+            "location": "global",
+            "dependsOn": [
+                "[string('privatelink.search.windows.net')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[variables('virtualNetworkId')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[string('privatelink.azurewebsites.net')]",
+            "location": "global",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(string('privatelink.azurewebsites.net'), '/link_to_', toLower(parameters('virtualNetworkName')))]",
+            "location": "global",
+            "dependsOn": [
+                "[string('privatelink.azurewebsites.net')]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[variables('virtualNetworkId')]"
+                }
+            }
+        },
+        {
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
             "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', variables('openaiPrivateEndpointName'))]",
+            "name": "[variables('openaiPrivateEndpointName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "privateEndpoint": {
@@ -355,7 +391,7 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
                 "[resourceId('Microsoft.Network/privateEndpoints', variables('openaiPrivateEndpointName'))]"
             ]
         },
