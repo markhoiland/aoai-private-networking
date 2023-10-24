@@ -396,5 +396,26 @@
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "openaiEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', variables('openaiPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "storageAccountEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', variables('storageAccountPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "cognitiveServicesEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', variables('cognitiveServicesPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "functionAppEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', variables('functionAppPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        },
+        "logicAppEndpoint": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', variables('logicAppPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
+        }
+    }
 }
