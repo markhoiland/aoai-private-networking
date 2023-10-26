@@ -237,7 +237,7 @@
             ]
         },
         {
-            "apiVersion": "2019-04-01",
+            "apiVersion": "2023-04-01",
             "name": "[concat('pep-', parameters('storageAccountName'))]",
             "type": "Microsoft.Network/privateEndpoints",
             "location": "[parameters('location')]",
@@ -290,7 +290,7 @@
             }
         },
         {
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2022-09-01",
             "name": "EndpointDnsRecords-0.3350499938700058",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
