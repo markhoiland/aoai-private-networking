@@ -286,7 +286,7 @@
                 "virtualNetwork": {
                     "id": "[variables('virtualNetworkId')]"
                 },
-                "registrationEnabled": false
+                "registrationEnabled": true
             }
         },
         {
@@ -307,7 +307,7 @@
                         "value": "[string('privatelink.blob.core.windows.net')]"
                     },
                     "privateEndpointNicResourceId": {
-                        "value": "[reference(variables('privateEndpointResourceId')).outputs.networkInterfaceId.value]"
+                        "value": "[resourceId('Microsoft.Network/privateEndpoints', concat('pep-', parameters('storageAccountName'))).networkInterfaces[0].id]" 
                     },
                     "nicRecordsTemplateUri": {
                         "value": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpointNic.json"
