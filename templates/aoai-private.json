@@ -46,6 +46,52 @@
                 "description": "Name of the network security group."
             }
         },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "staoaitest02",
+            "metadata": {
+                "description": "Name of the storage account."
+            }
+        },
+        "storageAccessTier": {
+            "type": "string",
+            "defaultValue": "Hot",
+            "allowedValues": [
+                "Hot",
+                "Cool"
+            ],
+            "metadata": {
+                "description": "Access tier for the storage account."
+            }
+        },
+        "storageIsHnsEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable Hierarchical Namespace for the storage account."
+            }
+        },
+        "storageIsSftpEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable SFTP for the storage account."
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "Replication type for storage account."
+            }
+        },
+        "storageKind": {
+            "type": "string",
+            "defaultValue": "StorageV2",
+            "metadata": {
+                "description": "Kind of storage account."
+            }
+        },
         "tagsByResource": {
             "type": "object",
             "defaultValue": {
@@ -53,6 +99,9 @@
                     "environment": "poc"
                 },
                 "Microsoft.Network/networkSecurityGroups": {
+                    "environment": "poc"
+                },
+                "Microsoft.Storage/storageAccounts": {
                     "environment": "poc"
                 }
             },
@@ -62,6 +111,8 @@
         }
     },
     "variables": {
+        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetId": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName'))]",
         "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
     },
     "resources": [
@@ -105,6 +156,187 @@
             "location": "[parameters('location')]",
             "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/networkSecurityGroups'), parameters('tagsByResource')['Microsoft.Network/networkSecurityGroups'], createObject())]",
             "properties": {}
+        },
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2022-05-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": true,
+                "defaultToOAuthAuthentication": false,
+                "accessTier": "[parameters('storageAccessTier')]",
+                "publicNetworkAccess": "Disabled",
+                "allowCrossTenantReplication": false,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Deny",
+                    "ipRules": []
+                },
+                "dnsEndpointType": "Standard",
+                "isHnsEnabled": "[parameters('storageIsHnsEnabled')]",
+                "isSftpEnabled": "[parameters('storageIsSftpEnabled')]",
+                "encryption": {
+                    "keySource": "Microsoft.Storage",
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        },
+                        "table": {
+                            "enabled": true
+                        },
+                        "queue": {
+                            "enabled": true
+                        }
+                    },
+                    "requireInfrastructureEncryption": false
+                }
+            },
+            "dependsOn": [],
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "[parameters('storageKind')]",
+            "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Storage/storageAccounts'), parameters('tagsByResource')['Microsoft.Storage/storageAccounts'], createObject())]"
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default')]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2022-05-01",
+            "properties": {
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                },
+                "containerDeleteRetentionPolicy": {
+                    "enabled": false
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default')]",
+            "type": "Microsoft.Storage/storageAccounts/fileservices",
+            "apiVersion": "2022-05-01",
+            "properties": {
+                "shareDeleteRetentionPolicy": {
+                    "enabled": false
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '/blobServices/default')]"
+            ]
+        },
+        {
+            "apiVersion": "2019-04-01",
+            "name": "[concat('pep-', parameters('storageAccountName'))]",
+            "type": "Microsoft.Network/privateEndpoints",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[concat('pepconn-', parameters('storageAccountName'))]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "subnet": {
+                    "id": "[variables('subnetId')]"
+                }
+            },
+            "tags": {},
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2018-05-01",
+            "name": "PrivateDns-0.3350499938700058",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[string('rg-aoai-test-02')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/privateEndpoints/', 'pep-', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/privateDnsZones",
+                            "apiVersion": "2018-09-01",
+                            "name": "[string('privatelink.blob.core.windows.net')]",
+                            "location": "global",
+                            "tags": {},
+                            "properties": {}
+                        },
+                        {
+                            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                            "apiVersion": "2018-09-01",
+                            "name": "[concat(string('privatelink.blob.core.windows.net'), '/', uniqueString(variables('virtualNetworkId')))]",
+                            "location": "global",
+                            "dependsOn": [
+                                "[string('privatelink.blob.core.windows.net')]"
+                            ],
+                            "properties": {
+                                "virtualNetwork": {
+                                    "id": "[variables('virtualNetworkId')]"
+                                },
+                                "registrationEnabled": false
+                            }
+                        },
+                        {
+                            "apiVersion": "2017-05-10",
+                            "name": "EndpointDnsRecords-0.3350499938700058",
+                            "type": "Microsoft.Resources/deployments",
+                            "dependsOn": [
+                                "[string('privatelink.blob.core.windows.net')]"
+                            ],
+                            "properties": {
+                                "mode": "Incremental",
+                                "templatelink": {
+                                    "contentVersion": "1.0.0.0",
+                                    "uri": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpoint.json"
+                                },
+                                "parameters": {
+                                    "privateDnsName": {
+                                        "value": "[string('privatelink.blob.core.windows.net')]"
+                                    },
+                                    "privateEndpointNicResourceId": {
+                                        "value": "[concat('Microsoft.Network/privateEndpoints/', 'pep-', parameters('storageAccountName')).outputs.networkInterfaceId.value]"
+                                    },
+                                    "nicRecordsTemplateUri": {
+                                        "value": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpointNic.json"
+                                    },
+                                    "ipConfigRecordsTemplateUri": {
+                                        "value": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpointIpConfig.json"
+                                    },
+                                    "uniqueId": {
+                                        "value": "0.3350499938700058"
+                                    },
+                                    "existingRecords": {
+                                        "value": {}
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
         }
     ]
 }

@@ -22,6 +22,24 @@
         "networkSecurityGroupName": {
             "value": "nsg-aoai-test-02"
         },
+        "storageAccountName": {
+            "value": "saaoaitest02"
+        },
+        "storageAccessTier": {
+            "value": "Hot"
+        },
+        "storageIsHnsEnabled": {
+            "value": false
+        },
+        "storageIsSftpEnabled": {
+            "value": false
+        },
+        "storageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "storageKind": {
+            "value": "StorageV2"
+        },
         "tagsByResource": {
             "value": {
                 "Microsoft.Network/virtualNetworks": {
