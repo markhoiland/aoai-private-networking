@@ -236,126 +236,53 @@
             ]
         },
         {
-            "apiVersion": "2018-05-01",
-            "type": "Microsoft.Resources/deployments",
-            "name": "privateEndpoints_0.27010405410518334",
+            "apiVersion": "2019-04-01",
+            "name": "[concat('pep-', parameters('storageAccountName'))]",
+            "type": "Microsoft.Network/privateEndpoints",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[concat('pepconn-', parameters('storageAccountName'))]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "subnet": {
+                    "id": "[variables('subnetId')]"
+                }
+            },
+            "tags": {},
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
-            ],
-            "resources": [],
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "privateEndpointName": {
-                        "value": "[concat('pep-', parameters('storageAccountName'))]"
-                    },
-                    "privateEndpointConnectionId": {
-                        "value": ""
-                    },
-                    "privateEndpointConnectionName": {
-                        "value": "[concat('pepconn-', parameters('storageAccountName'))]"
-                    },
-                    "privateEndpointId": {
-                        "value": "[resourceId('Microsoft.Network/privateEndpoints', concat('pep-', parameters('storageAccountName')))]"
-                    },
-                    "privateEndpointApiVersion": {
-                        "value": "2021-05-01"
-                    },
-                    "privateLinkServiceId": {
-                        "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-                    },
-                    "groupId": {
-                        "value": "blob"
-                    },
-                    "subnetId": {
-                        "value": "[variables('subnetId')]"
-                    },
-                    "location": {
-                        "value": "northcentralus"
-                    },
-                    "tags": {
-                        "value": {}
-                    }
-                },
-                "templatelink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateEndpointForStorage.json"
-                }
-            }
+            ]
         },
         {
-            "apiVersion": "2018-05-01",
-            "name": "PrivateDns-0.3350499938700058",
-            "type": "Microsoft.Resources/deployments",
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[string('privatelink.blob.core.windows.net')]",
+            "location": "global",
+            "tags": {},
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(string('privatelink.blob.core.windows.net'), '/', uniqueString(variables('virtualNetworkId')))]",
+            "location": "global",
             "dependsOn": [
-                "[concat('Microsoft.Network/privateEndpoints/', 'pep-', parameters('storageAccountName'))]"
+                "[string('privatelink.blob.core.windows.net')]"
             ],
             "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "type": "Microsoft.Network/privateDnsZones",
-                            "apiVersion": "2018-09-01",
-                            "name": "[string('privatelink.blob.core.windows.net')]",
-                            "location": "global",
-                            "tags": {},
-                            "properties": {}
-                        },
-                        {
-                            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-                            "apiVersion": "2018-09-01",
-                            "name": "[concat(string('privatelink.blob.core.windows.net'), '/', uniqueString(variables('virtualNetworkId')))]",
-                            "location": "global",
-                            "dependsOn": [
-                                "[string('privatelink.blob.core.windows.net')]"
-                            ],
-                            "properties": {
-                                "virtualNetwork": {
-                                    "id": "[variables('virtualNetworkId')]"
-                                },
-                                "registrationEnabled": false
-                            }
-                        },
-                        {
-                            "apiVersion": "2017-05-10",
-                            "name": "EndpointDnsRecords-0.3350499938700058",
-                            "type": "Microsoft.Resources/deployments",
-                            "dependsOn": [
-                                "[string('privatelink.blob.core.windows.net')]"
-                            ],
-                            "properties": {
-                                "mode": "Incremental",
-                                "templatelink": {
-                                    "contentVersion": "1.0.0.0",
-                                    "uri": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpoint.json"
-                                },
-                                "parameters": {
-                                    "privateDnsName": {
-                                        "value": "[string('privatelink.blob.core.windows.net')]"
-                                    },
-                                    "privateEndpointNicResourceId": {
-                                        "value": "[reference('privateEndpoints_0.27010405410518334').outputs.networkInterfaceId.value]"
-                                    },
-                                    "nicRecordsTemplateUri": {
-                                        "value": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpointNic.json"
-                                    },
-                                    "ipConfigRecordsTemplateUri": {
-                                        "value": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpointIpConfig.json"
-                                    },
-                                    "uniqueId": {
-                                        "value": "0.3350499938700058"
-                                    },
-                                    "existingRecords": {
-                                        "value": {}
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
+                "virtualNetwork": {
+                    "id": "[variables('virtualNetworkId')]"
+                },
+                "registrationEnabled": false
             }
         }
     ]
