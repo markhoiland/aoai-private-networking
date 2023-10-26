@@ -235,6 +235,7 @@
                 "[concat(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '/blobServices/default')]"
             ]
         },
+        /*
         {
             "apiVersion": "2019-04-01",
             "name": "[concat('pep-', parameters('storageAccountName'))]",
@@ -262,11 +263,59 @@
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
             ]
         },
+        */
+        {
+            "apiVersion": "2018-05-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "privateEndpoints_0.27010405410518334",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "resources": [],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "privateEndpointName": {
+                        "value": "[concat('pep-', parameters('storageAccountName'))]"
+                    },
+                    "privateEndpointConnectionId": {
+                        "value": ""
+                    },
+                    "privateEndpointConnectionName": {
+                        "value": "[concat('pepconn-', parameters('storageAccountName'))]"
+                    },
+                    "privateEndpointId": {
+                        "value": "[resourceId('Microsoft.Network/privateEndpoints', concat('pep-', parameters('storageAccountName')))]"
+                    },
+                    "privateEndpointApiVersion": {
+                        "value": "2021-05-01"
+                    },
+                    "privateLinkServiceId": {
+                        "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                    },
+                    "groupId": {
+                        "value": "blob"
+                    },
+                    "subnetId": {
+                        "value": "[variables('subnetId')]"
+                    },
+                    "location": {
+                        "value": "northcentralus"
+                    },
+                    "tags": {
+                        "value": {}
+                    }
+                },
+                "templatelink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateEndpointForStorage.json"
+                }
+            }
+        },
         {
             "apiVersion": "2018-05-01",
             "name": "PrivateDns-0.3350499938700058",
             "type": "Microsoft.Resources/deployments",
-            "resourceGroup": "[string('rg-aoai-test-02')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/privateEndpoints/', 'pep-', parameters('storageAccountName'))]"
             ],
@@ -317,7 +366,7 @@
                                         "value": "[string('privatelink.blob.core.windows.net')]"
                                     },
                                     "privateEndpointNicResourceId": {
-                                        "value": "[concat('Microsoft.Network/privateEndpoints/', 'pep-', parameters('storageAccountName')).outputs.networkInterfaceId.value]"
+                                        "value": "[reference('privateEndpoints_0.27010405410518334').outputs.networkInterfaceId.value]"
                                     },
                                     "nicRecordsTemplateUri": {
                                         "value": "https://storage.hosting.portal.azure.net/storage/Content/4.13.393.1283/DeploymentTemplates/PrivateDnsForPrivateEndpointNic.json"
