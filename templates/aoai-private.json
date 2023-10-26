@@ -95,7 +95,7 @@
                 }
             },
             "dependsOn": [
-                "networkSecurityGroupsNew_name"
+                "networkSecurityGroupName"
             ]
         },
         {
