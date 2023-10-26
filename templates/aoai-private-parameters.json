@@ -8,6 +8,20 @@
         "virtualNetworkName": {
             "value": "vnet-aoai-test-02"
         },
+        "addressPrefixes": {
+            "value": [
+                "10.0.0.0/16"
+            ]
+        },
+        "subnetName": {
+            "value": "private-endpoint"
+        },
+        "subnetPrefix": {
+            "value": "10.0.0.0/24"
+        },
+        "networkSecurityGroupName": {
+            "value": "nsg-aoai-test-02"
+        },
         "tagsByResource": {
             "value": {
                 "Microsoft.Network/virtualNetworks": {
@@ -17,33 +31,6 @@
                     "environment": "poc"
                 }
             }
-        },
-        "addressPrefixes": {
-            "value": [
-                "10.0.0.0/16"
-            ]
-        },
-        "networkSecurityGroupsNew": {
-            "value": [
-                {
-                    "name": "nsg-aoai-test-02"
-                }
-            ]
-        },
-        "subnets": {
-            "value": [
-                {
-                    "name": "private-endpoint-01",
-                    "properties": {
-                        "addressPrefixes": [
-                            "10.0.0.0/24"
-                        ],
-                        "networkSecurityGroup": {
-                            "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourcegroups/rg-aoai-test-02/providers/Microsoft.Network/networkSecurityGroups/nsg-aoai-test-02"
-                        }
-                    }
-                }
-            ]
         }
     }
 }

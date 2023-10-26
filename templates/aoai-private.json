@@ -16,6 +16,36 @@
                 "description": "Name of the virtual network resource."
             }
         },
+        "addressPrefixes": {
+            "type": "array",
+            "defaultValue": [
+                "10.1.0.0/16"
+            ],
+            "metadata": {
+                "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "private-endpoint",
+            "metadata": {
+                "description": "Name of the subnet for this virtual network."
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/24",
+            "metadata": {
+                "description": "Address block reserved for this subnet, in CIDR notation."
+            }
+        },
+        "networkSecurityGroupName": {
+            "type": "string",
+            "defaultValue": "nsg-aoai-test-02",
+            "metadata": {
+                "description": "Name of the network security group."
+            }
+        },
         "tagsByResource": {
             "type": "object",
             "defaultValue": {
@@ -29,39 +59,11 @@
             "metadata": {
                 "description": "Optional tags for the resources."
             }
-        },
-        "addressPrefixes": {
-            "type": "array",
-            "defaultValue": [
-                "10.1.0.0/16"
-            ],
-            "metadata": {
-                "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
-            }
-        },
-        "subnets": {
-            "type": "array",
-            "defaultValue": [
-                {
-                    "name": "private-endpoint",
-                    "properties": {
-                        "addressPrefix": "10.1.0.0/24"
-                    }
-                }
-            ],
-            "metadata": {
-                "description": "Array of subnet objects for this virtual network."
-            }
-        },
-        "networkSecurityGroupsNew": {
-            "type": "array",
-            "defaultValue": [],
-            "metadata": {
-                "description": "Array of NAT Gateway objects for subnets."
-            }
         }
     },
-    "variables": {},
+    "variables": {
+        "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+    },
     "resources": [
         {
             "type": "Microsoft.Network/virtualNetworks",
@@ -73,7 +75,19 @@
                 "addressSpace": {
                     "addressPrefixes": "[parameters('addressPrefixes')]"
                 },
-                "subnets": "[parameters('subnets')]",
+                "subnets": [
+                {
+                    "name": "[parameters('subnetName')]",
+                    "properties": {
+                        "addressPrefixes": [
+                            "[parameters('subnetPrefix')]"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[variables('networkSecurityGroupId')]"
+                        }
+                    }
+                }
+            ],
                 "enableDdosProtection": false,
                 "encryption": {
                     "enabled": false,
@@ -85,14 +99,9 @@
             ]
         },
         {
-            "copy": {
-                "name": "networkSecurityGroupsNew_name",
-                "count": "[length(parameters('networkSecurityGroupsNew'))]"
-            },
-            "condition": "[greater(length(parameters('networkSecurityGroupsNew')), 0)]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2020-11-01",
-            "name": "[parameters('networkSecurityGroupsNew')[copyIndex()].name]",
+            "name": "[parameters('networkSecurityGroupName')]",
             "location": "[parameters('location')]",
             "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/networkSecurityGroups'), parameters('tagsByResource')['Microsoft.Network/networkSecurityGroups'], createObject())]",
             "properties": {}
