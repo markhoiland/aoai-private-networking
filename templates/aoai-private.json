@@ -36,41 +36,6 @@
             "metadata": {
                 "description": "IP Address Prefix of the virtual network."
             }
-        },
-        "openaiName": {
-            "type": "string",
-            "defaultValue": "aoai-test-01",
-            "metadata": {
-                "description": "The name of the OpenAI resource."
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "defaultValue": "staoaitest01",
-            "metadata": {
-                "description": "The name of the storage account."
-            }
-        },
-        "cognitiveServicesName": {
-            "type": "string",
-            "defaultValue": "cog-aoai-test-01",
-            "metadata": {
-                "description": "The name of the Cognitive Services resource."
-            }
-        },
-        "functionAppName": {
-            "type": "string",
-            "defaultValue": "func-aoai-test-01",
-            "metadata": {
-                "description": "The name of the Function App."
-            }
-        },
-        "logicAppName": {
-            "type": "string",
-            "defaultValue": "logapp-aoai-test-01",
-            "metadata": {
-                "description": "The name of the Logic App."
-            }
         }
     },
     "variables": {

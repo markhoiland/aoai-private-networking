@@ -16,6 +16,21 @@
         },
         "subnetAddressPrefix": {
             "value": "10.0.0.0/24"
+        },
+        "openaiName": {
+            "value": "aoai-test-01"
+        },
+        "storageAccountName": {
+            "value": "staoaitest01"
+        },
+        "cognitiveServicesName": {
+            "value": "cog-aoai-test-01"
+        },
+        "functionAppName": {
+            "value": "func-aoai-test-01"
+        },
+        "logicAppName": {
+            "value": "logapp-aoai-test-01"
         }
     }
 }
