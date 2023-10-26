@@ -1,21 +1,49 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
             "value": "northcentralus"
         },
         "virtualNetworkName": {
-            "value": "vnet-aoai-test-01"
+            "value": "vnet-aoai-test-02"
         },
-        "virtualNetworkAddressPrefix": {
-            "value": "10.0.0.0/16"
+        "tagsByResource": {
+            "value": {
+                "Microsoft.Network/virtualNetworks": {
+                    "environment": "poc"
+                },
+                "Microsoft.Network/networkSecurityGroups": {
+                    "environment": "poc"
+                }
+            }
         },
-        "subnetName": {
-            "value": "private-endpoint-01"
+        "addressPrefixes": {
+            "value": [
+                "10.0.0.0/16"
+            ]
         },
-        "subnetAddressPrefix": {
-            "value": "10.0.0.0/24"
+        "networkSecurityGroupsNew": {
+            "value": [
+                {
+                    "name": "nsg-aoai-test-02"
+                }
+            ]
+        },
+        "subnets": {
+            "value": [
+                {
+                    "name": "private-endpoint-01",
+                    "properties": {
+                        "addressPrefixes": [
+                            "10.0.0.0/24"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourcegroups/rg-aoai-test-02/providers/Microsoft.Network/networkSecurityGroups/nsg-aoai-test-02"
+                        }
+                    }
+                }
+            ]
         }
     }
 }

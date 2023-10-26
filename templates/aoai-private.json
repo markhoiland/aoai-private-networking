@@ -6,70 +6,96 @@
             "type": "string",
             "defaultValue": "northcentralus",
             "metadata": {
-                "description": "Region where all resources will be deployed."
+                "description": "Azure region for the deployment, resource group and resources."
             }
         },
         "virtualNetworkName": {
             "type": "string",
-            "defaultValue": "vnet-aoai-test-01",
+            "defaultValue": "vnet-aoai-test-02",
             "metadata": {
-                "description": "The name of the virtual network."
+                "description": "Name of the virtual network resource."
             }
         },
-        "virtualNetworkAddressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/16",
+        "tagsByResource": {
+            "type": "object",
+            "defaultValue": {
+                "Microsoft.Network/virtualNetworks": {
+                    "environment": "poc"
+                },
+                "Microsoft.Network/networkSecurityGroups": {
+                    "environment": "poc"
+                }
+            },
             "metadata": {
-                "description": "The address prefix for the virtual network."
+                "description": "Optional tags for the resources."
             }
         },
-        "subnetName": {
-            "type": "string",
-            "defaultValue": "private-endpoint-01",
+        "addressPrefixes": {
+            "type": "array",
+            "defaultValue": [
+                "10.1.0.0/16"
+            ],
             "metadata": {
-                "description": "Name of the subnet."
+                "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
             }
         },
-        "subnetAddressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/24",
+        "subnets": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "name": "private-endpoint",
+                    "properties": {
+                        "addressPrefix": "10.1.0.0/24"
+                    }
+                }
+            ],
             "metadata": {
-                "description": "IP Address Prefix of the virtual network."
+                "description": "Array of subnet objects for this virtual network."
+            }
+        },
+        "networkSecurityGroupsNew": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "Array of NAT Gateway objects for subnets."
             }
         }
     },
-    "variables": {
-        "openaiPrivateEndpointName": "[concat('pep-',parameters('openaiName'))]",
-        "storageAccountPrivateEndpointName": "[concat('pep-',parameters('storageAccountName'))]",
-        "cognitiveServicesPrivateEndpointName": "[concat('pep-',parameters('cognitiveServicesName'))]",
-        "functionAppPrivateEndpointName": "[concat('pep-',parameters('functionAppName'))]",
-        "logicAppPrivateEndpointName": "[concat('pep-',parameters('logicAppName'))]",
-        "virtualNetworkSubnetName": "default",
-        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnetId": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName'))]",
-    },
+    "variables": {},
     "resources": [
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2021-02-01",
+            "apiVersion": "2021-05-01",
             "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
+            "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/virtualNetworks'), parameters('tagsByResource')['Microsoft.Network/virtualNetworks'], createObject())]",
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('virtualNetworkAddressPrefix')]"
-                    ]
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
                 },
-                "subnets": [
-                    {
-                        "name": "[parameters('subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[parameters('subnetAddressPrefix')]"
-                        }
-                    }
-                ]
-            }
+                "subnets": "[parameters('subnets')]",
+                "enableDdosProtection": false,
+                "encryption": {
+                    "enabled": false,
+                    "enforcement": "AllowUnencrypted"
+                }
+            },
+            "dependsOn": [
+                "networkSecurityGroupsNew_name"
+            ]
+        },
+        {
+            "copy": {
+                "name": "networkSecurityGroupsNew_name",
+                "count": "[length(parameters('networkSecurityGroupsNew'))]"
+            },
+            "condition": "[greater(length(parameters('networkSecurityGroupsNew')), 0)]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('networkSecurityGroupsNew')[copyIndex()].name]",
+            "location": "[parameters('location')]",
+            "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/networkSecurityGroups'), parameters('tagsByResource')['Microsoft.Network/networkSecurityGroups'], createObject())]",
+            "properties": {}
         }
-    ],
-    "outputs": {}
+    ]
 }
