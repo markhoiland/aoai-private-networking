@@ -235,35 +235,6 @@
                 "[concat(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '/blobServices/default')]"
             ]
         },
-        /*
-        {
-            "apiVersion": "2019-04-01",
-            "name": "[concat('pep-', parameters('storageAccountName'))]",
-            "type": "Microsoft.Network/privateEndpoints",
-            "location": "[parameters('location')]",
-            "properties": {
-                "privateLinkServiceConnections": [
-                    {
-                        "name": "[concat('pepconn-', parameters('storageAccountName'))]",
-                        "properties": {
-                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
-                            "groupIds": [
-                                "blob"
-                            ]
-                        }
-                    }
-                ],
-                "manualPrivateLinkServiceConnections": [],
-                "subnet": {
-                    "id": "[variables('subnetId')]"
-                }
-            },
-            "tags": {},
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
-            ]
-        },
-        */
         {
             "apiVersion": "2018-05-01",
             "type": "Microsoft.Resources/deployments",
