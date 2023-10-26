@@ -95,7 +95,7 @@
                 }
             },
             "dependsOn": [
-                "networkSecurityGroupName"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
             ]
         },
         {
