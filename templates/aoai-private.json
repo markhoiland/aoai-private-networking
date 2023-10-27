@@ -1,466 +1,1063 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "location": {
-            "type": "string",
-            "defaultValue": "northcentralus",
-            "metadata": {
-                "description": "Region where all resources will be deployed."
-            }
-        },
-        "virtualNetworkName": {
-            "type": "string",
-            "defaultValue": "vnet-aoai-test-01",
-            "metadata": {
-                "description": "The name of the virtual network."
-            }
-        },
-        "virtualNetworkAddressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/16",
-            "metadata": {
-                "description": "The address prefix for the virtual network."
-            }
-        },
-        "subnetName": {
-            "type": "string",
-            "defaultValue": "private-endpoint-01",
-            "metadata": {
-                "description": "Name of the subnet."
-            }
-        },
-        "subnetAddressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/24",
-            "metadata": {
-                "description": "IP Address Prefix of the virtual network."
-            }
-        },
-        "openaiName": {
-            "type": "string",
-            "defaultValue": "aoai-test-01",
-            "metadata": {
-                "description": "The name of the OpenAI resource."
-            }
-        },
-        "openaiPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the OpenAI resource."
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "defaultValue": "staoaitest01",
-            "metadata": {
-                "description": "The name of the storage account."
-            }
-        },
-        "storageAccountPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the storage account."
-            }
-        },
-        "cognitiveServicesName": {
-            "type": "string",
-            "defaultValue": "cog-aoai-test-01",
-            "metadata": {
-                "description": "The name of the Cognitive Services resource."
-            }
-        },
-        "cognitiveServicesPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the Cognitive Services resource."
-            }
-        },
-        "functionAppName": {
-            "type": "string",
-            "defaultValue": "func-aoai-test-01",
-            "metadata": {
-                "description": "The name of the Function App."
-            }
-        },
-        "functionAppPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the Function App."
-            }
-        },
-        "logicAppName": {
-            "type": "string",
-            "defaultValue": "logapp-aoai-test-01",
-            "metadata": {
-                "description": "The name of the Logic App."
-            }
-        },
-        "logicAppPrivateEndpointName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the private endpoint for the Logic App."
-            }
-        }
-    },
-    "variables": {
-        "virtualNetworkSubnetName": "default",
-        "openaiSubnetName": "openai",
-        "storageAccountSubnetName": "storage",
-        "cognitiveServicesSubnetName": "cognitiveservices",
-        "functionAppSubnetName": "functionapp",
-        "logicAppSubnetName": "logicapp",
-        "virtualNetworkSubnetAddressPrefix": "[concat(parameters('virtualNetworkAddressPrefix'), '/24')]",
-        "openaiSubnetAddressPrefix": "10.0.1.0/24",
-        "storageAccountSubnetAddressPrefix": "10.0.2.0/24",
-        "cognitiveServicesSubnetAddressPrefix": "10.0.3.0/24",
-        "functionAppSubnetAddressPrefix": "10.0.4.0/24",
-        "logicAppSubnetAddressPrefix": "10.0.5.0/24",
-        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "virtualNetworkSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('virtualNetworkSubnetName'))]",
-        "subnetId": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName'))]",
-        "openaiSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('openaiSubnetName'))]",
-        "storageAccountSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('storageAccountSubnetName'))]",
-        "cognitiveServicesSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('cognitiveServicesSubnetName'))]",
-        "functionAppSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('functionAppSubnetName'))]",
-        "logicAppSubnetId": "[concat(variables('virtualNetworkId'), '/subnets/', variables('logicAppSubnetName'))]"
-    },
-    "resources": [
-        {
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2021-02-01",
-            "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('virtualNetworkAddressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('virtualNetworkSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('virtualNetworkSubnetAddressPrefix')]"
-                        }
-                    },
-                    {
-                        "name": "[variables('openaiSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('openaiSubnetAddressPrefix')]"
-                        }
-                    },
-                    {
-                        "name": "[variables('storageAccountSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('storageAccountSubnetAddressPrefix')]"
-                        }
-                    },
-                    {
-                        "name": "[variables('cognitiveServicesSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('cognitiveServicesSubnetAddressPrefix')]"
-                        }
-                    },
-                    {
-                        "name": "[variables('functionAppSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('functionAppSubnetAddressPrefix')]"
-                        }
-                    },
-                    {
-                        "name": "[variables('logicAppSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('logicAppSubnetAddressPrefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.OpenAI/openais",
-            "apiVersion": "2021-06-01-preview",
-            "name": "[parameters('openaiName')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "dav4",
-                "tier": "Standard"
-            },
-            "properties": {},
-            "resources": [
-                {
-                    "type": "privateEndpoints",
-                    "apiVersion": "2021-02-01",
-                    "name": "[parameters('openaiPrivateEndpointName')]",
-                    "location": "[parameters('location')]",
-                    "properties": {
-                        "subnet": {
-                            "id": "[variables('openaiSubnetId')]"
-                        },
-                        "privateLinkServiceConnections": [
-                            {
-                                "name": "openai",
-                                "properties": {
-                                    "privateLinkServiceId": "[resourceId('Microsoft.OpenAI/openais', parameters('openaiName'))]",
-                                    "groupIds": [
-                                        "openai"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2021-04-01",
-            "name": "[parameters('storageAccountName')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "kind": "StorageV2",
-            "properties": {},
-            "resources": [
-                {
-                    "type": "privateEndpoints",
-                    "apiVersion": "2021-02-01",
-                    "name": "[parameters('storageAccountPrivateEndpointName')]",
-                    "location": "[parameters('location')]",
-                    "properties": {
-                        "subnet": {
-                            "id": "[variables('storageAccountSubnetId')]"
-                        },
-                        "privateLinkServiceConnections": [
-                            {
-                                "name": "storage",
-                                "properties": {
-                                    "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
-                                    "groupIds": [
-                                        "blob"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.CognitiveServices/accounts",
-            "apiVersion": "2021-04-30-preview",
-            "name": "[parameters('cognitiveServicesName')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "S0",
-                "tier": "Standard"
-            },
-            "kind": "TextAnalytics",
-            "properties": {},
-            "resources": [
-                {
-                    "type": "privateEndpoints",
-                    "apiVersion": "2021-02-01",
-                    "name": "[parameters('cognitiveServicesPrivateEndpointName')]",
-                    "location": "[parameters('location')]",
-                    "properties": {
-                        "subnet": {
-                            "id": "[variables('cognitiveServicesSubnetId')]"
-                        },
-                        "privateLinkServiceConnections": [
-                            {
-                                "name": "cognitiveservices",
-                                "properties": {
-                                    "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('cognitiveServicesName'))]",
-                                    "groupIds": [
-                                        "cognitiveservices"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.Web/sites",
-            "apiVersion": "2021-02-01",
-            "name": "[parameters('functionAppName')]",
-            "location": "[parameters('location')]",
-            "kind": "functionapp",
-            "properties": {},
-            "resources": [
-                {
-                    "type": "privateEndpoints",
-                    "apiVersion": "2021-02-01",
-                    "name": "[parameters('functionAppPrivateEndpointName')]",
-                    "location": "[parameters('location')]",
-                    "properties": {
-                        "subnet": {
-                            "id": "[variables('functionAppSubnetId')]"
-                        },
-                        "privateLinkServiceConnections": [
-                            {
-                                "name": "functionapp",
-                                "properties": {
-                                    "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
-                                    "groupIds": [
-                                        "functionapp"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.Logic/workflows",
-            "apiVersion": "2017-07-01",
-            "name": "[parameters('logicAppName')]",
-            "location": "[parameters('location')]",
-            "properties": {},
-            "resources": [
-                {
-                    "type": "privateEndpoints",
-                    "apiVersion": "2021-02-01",
-                    "name": "[parameters('logicAppPrivateEndpointName')]",
-                    "location": "[parameters('location')]",
-                    "properties": {
-                        "subnet": {
-                            "id": "[variables('logicAppSubnetId')]"
-                        },
-                        "privateLinkServiceConnections": [
-                            {
-                                "name": "logicapp",
-                                "properties": {
-                                    "privateLinkServiceId": "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
-                                    "groupIds": [
-                                        "logicapp"
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com')]",
-            "location": "[parameters('location')]",
-            "properties": {}
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "virtualNetwork": {
-                    "id": "[variables('virtualNetworkId')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('openaiPrivateEndpointName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "privateEndpoint": {
-                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('openaiPrivateEndpointName'))]"
-                }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', parameters('openaiPrivateEndpointName'))]"
-            ]
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('storageAccountPrivateEndpointName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "privateEndpoint": {
-                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('storageAccountPrivateEndpointName'))]"
-                }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', parameters('storageAccountPrivateEndpointName'))]"
-            ]
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('cognitiveServicesPrivateEndpointName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "privateEndpoint": {
-                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('cognitiveServicesPrivateEndpointName'))]"
-                }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', parameters('cognitiveServicesPrivateEndpointName'))]"
-            ]
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('functionAppPrivateEndpointName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "privateEndpoint": {
-                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('functionAppPrivateEndpointName'))]"
-                }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', parameters('functionAppPrivateEndpointName'))]"
-            ]
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks/privateEndpoints",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName'), '/', parameters('logicAppPrivateEndpointName'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "privateEndpoint": {
-                    "id": "[resourceId('Microsoft.Network/privateEndpoints', parameters('logicAppPrivateEndpointName'))]"
-                }
-            },
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', concat(parameters('virtualNetworkName'), '/privatelink.azure.com/', parameters('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Network/privateEndpoints', parameters('logicAppPrivateEndpointName'))]"
-            ]
-        }
-    ],
-    "outputs": {
-        "openaiEndpoint": {
-            "type": "string",
-            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('openaiPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
-        },
-        "storageAccountEndpoint": {
-            "type": "string",
-            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('storageAccountPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
-        },
-        "cognitiveServicesEndpoint": {
-            "type": "string",
-            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('cognitiveServicesPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
-        },
-        "functionAppEndpoint": {
-            "type": "string",
-            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('functionAppPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
-        },
-        "logicAppEndpoint": {
-            "type": "string",
-            "value": "[reference(concat('Microsoft.Network/privateEndpoints/', parameters('logicAppPrivateEndpointName'))).privateLinkServiceConnections[0].properties.privateEndpoint]"
-        }
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.14.85.62628",
+      "templateHash": "5123716658403162706"
     }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "northcentralus",
+      "metadata": {
+        "description": "Azure region for the deployment, resource group and resources."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet-aoai-test-01",
+      "metadata": {
+        "description": "Name of the virtual network resource."
+      }
+    },
+    "addressPrefixes": {
+      "type": "array",
+      "defaultValue": [
+        "10.1.0.0/16"
+      ],
+      "metadata": {
+        "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
+      }
+    },
+    "subnetName_Pep": {
+      "type": "string",
+      "defaultValue": "private-endpoint",
+      "metadata": {
+        "description": "Name of the private endpoint subnet for this virtual network."
+      }
+    },
+    "subnetPrefix_Pep": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "Address block reserved for the private endpoint subnet, in CIDR notation."
+      }
+    },
+    "subnetName_ViLog": {
+      "type": "string",
+      "defaultValue": "logapp-vi",
+      "metadata": {
+        "description": "Name of the Logic App VNet integration  subnet for this virtual network."
+      }
+    },
+    "subnetPrefix_ViLog": {
+      "type": "string",
+      "defaultValue": "10.1.1.0/24",
+      "metadata": {
+        "description": "Address block reserved for the Logic App VNet integration  subnet, in CIDR notation."
+      }
+    },
+    "subnetName_ViFnc": {
+      "type": "string",
+      "defaultValue": "funcapp-vi",
+      "metadata": {
+        "description": "Name of the Function App VNet integration subnet for this virtual network."
+      }
+    },
+    "subnetPrefix_ViFnc": {
+      "type": "string",
+      "defaultValue": "10.1.2.0/24",
+      "metadata": {
+        "description": "Address block reserved for the Function App VNet integration subnet, in CIDR notation."
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "defaultValue": "nsg-aoai-test-01",
+      "metadata": {
+        "description": "Name of the network security group."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "staoaitest01",
+      "metadata": {
+        "description": "Name of the storage account."
+      }
+    },
+    "storageAccessTier": {
+      "type": "string",
+      "defaultValue": "Hot",
+      "allowedValues": [
+        "Hot",
+        "Cool"
+      ],
+      "metadata": {
+        "description": "Access tier for the storage account."
+      }
+    },
+    "storageIsHnsEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Hierarchical Namespace for the storage account."
+      }
+    },
+    "storageIsSftpEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable SFTP for the storage account."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Replication type for storage account."
+      }
+    },
+    "storageKind": {
+      "type": "string",
+      "defaultValue": "StorageV2",
+      "metadata": {
+        "description": "Kind of storage account."
+      }
+    },
+    "tagsByResource": {
+      "type": "object",
+      "defaultValue": {
+        "Microsoft.Network/virtualNetworks": {
+          "environment": "poc"
+        },
+        "Microsoft.Network/networkSecurityGroups": {
+          "environment": "poc"
+        },
+        "Microsoft.Storage/storageAccounts": {
+          "environment": "poc"
+        },
+        "Microsoft.Web/sites": {
+          "environment": "poc"
+        },
+        "Microsoft.CognitiveServices/accounts": {
+          "environment": "poc"
+        }
+      },
+      "metadata": {
+        "description": "Optional tags for the resources."
+      }
+    },
+    "logicAppName": {
+      "type": "string",
+      "defaultValue": "logapp-aoai-test-01",
+      "metadata": {
+        "description": "Name of the Login App."
+      }
+    },
+    "aspStorageAccountName": {
+      "type": "string",
+      "defaultValue": "staoaitestasp01",
+      "metadata": {
+        "description": "Name of the storage account for Logic and Function Apps."
+      }
+    },
+    "netFrameworkVersion": {
+      "type": "string",
+      "defaultValue": "v6.0",
+      "metadata": {
+        "description": ".NET Framework version."
+      }
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "defaultValue": "asplog-aoai-test-01",
+      "metadata": {
+        "description": "Name of the hosting plan / server farm."
+      }
+    },
+    "hostingPlanSku": {
+      "type": "string",
+      "defaultValue": "WorkflowStandard",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm SKU."
+      }
+    },
+    "hostingPlanSkuCode": {
+      "type": "string",
+      "defaultValue": "WS1",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm SKU code."
+      }
+    },
+    "hostingPlanWorkerSize": {
+      "type": "string",
+      "defaultValue": "3"
+    },
+    "hostingPlanWorkerSizeId": {
+      "type": "string",
+      "defaultValue": "3"
+    },
+    "numberOfWorkers": {
+      "type": "string",
+      "defaultValue": "1"
+    },
+    "vnetPrivatePortsCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "funcAppName": {
+      "type": "string",
+      "defaultValue": "funcapp-aoai-test-01",
+      "metadata": {
+        "description": "Name of the Function App."
+      }
+    },
+    "linuxFxVersion": {
+      "type": "string",
+      "defaultValue": "Python|3.11",
+      "metadata": {
+        "description": "Language and version for the language-specific worker process. For example, \"Python|3.11\"."
+      }
+    },
+    "hostingPlanNameFunc": {
+      "type": "string",
+      "defaultValue": "aspfnc-aoai-test-01",
+      "metadata": {
+        "description": "Name of the Function App hosting plan / server farm."
+      }
+    },
+    "hostingPlanSkuFunc": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "PremiumV2",
+        "PremiumV3"
+      ],
+      "metadata": {
+        "description": "Hosting Plan / Server Farm SKU for the Function App."
+      }
+    },
+    "hostingPlanSkuCodeFunc": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "B1",
+        "P1V2",
+        "P1V3",
+        "P2V2",
+        "P2V3",
+        "P3V2",
+        "P3V3"
+      ],
+      "metadata": {
+        "description": "Hosting Plan / Server Farm SKU code for the Function App."
+      }
+    },
+    "hostingPlanWorkerSizeFunc": {
+      "type": "string",
+      "defaultValue": "6",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm worker size for the Function App."
+      }
+    },
+    "hostingPlanWorkerSizeIdFunc": {
+      "type": "string",
+      "defaultValue": "6",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm worker size ID for the Function App."
+      }
+    },
+    "numberOfWorkersFunc": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm number of workers for the Function App."
+      }
+    },
+    "funcAlwaysOn": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "AlwaysOn setting for the Function App. True or False."
+      }
+    },
+    "openAiName": {
+      "type": "string",
+      "defaultValue": "aoai-test-01",
+      "metadata": {
+        "description": "Name of the Azure OpenAI resource."
+      }
+    },
+    "openAiSku": {
+      "type": "string",
+      "defaultValue": "S0",
+      "metadata": {
+        "description": "SKU for the Azure OpenAI resource."
+      }
+    },
+    "aiSpeechName": {
+      "type": "string",
+      "defaultValue": "speech-aoai-test-01",
+      "metadata": {
+        "description": "Name of the Azure AI Speech Services resource."
+      }
+    },
+    "aiSpeechSku": {
+      "type": "string",
+      "defaultValue": "S0",
+      "metadata": {
+        "description": "SKU for the Azure AI Speech Services resource."
+      }
+    }
+  },
+  "variables": {
+    "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnetId_Pep": "[format('{0}/subnets/{1}', variables('virtualNetworkId'), parameters('subnetName_Pep'))]",
+    "subnetId_ViLog": "[format('{0}/subnets/{1}', variables('virtualNetworkId'), parameters('subnetName_ViLog'))]",
+    "subnetId_ViFnc": "[format('{0}/subnets/{1}', variables('virtualNetworkId'), parameters('subnetName_ViFnc'))]",
+    "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+    "privateEndpointResourceId": "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('storageAccountName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/virtualNetworks'), parameters('tagsByResource')['Microsoft.Network/virtualNetworks'], createObject())]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[parameters('addressPrefixes')]"
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName_Pep')]",
+            "properties": {
+              "addressPrefixes": [
+                "[parameters('subnetPrefix_Pep')]"
+              ],
+              "networkSecurityGroup": {
+                "id": "[variables('networkSecurityGroupId')]"
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          },
+          {
+            "name": "[parameters('subnetName_ViLog')]",
+            "properties": {
+              "addressPrefixes": [
+                "[parameters('subnetPrefix_ViLog')]"
+              ],
+              "networkSecurityGroup": {
+                "id": "[variables('networkSecurityGroupId')]"
+              },
+              "delegations": [
+                {
+                  "name": "delegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverfarms"
+                  }
+                }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
+                }
+              ],
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          },
+          {
+            "name": "[parameters('subnetName_ViFnc')]",
+            "properties": {
+              "addressPrefixes": [
+                "[parameters('subnetPrefix_ViFnc')]"
+              ],
+              "networkSecurityGroup": {
+                "id": "[variables('networkSecurityGroupId')]"
+              },
+              "delegations": [
+                {
+                  "name": "delegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverfarms"
+                  }
+                }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
+                }
+              ],
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+          }
+        ],
+        "enableDdosProtection": false,
+        "encryption": {
+          "enabled": false,
+          "enforcement": "AllowUnencrypted"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/networkSecurityGroups'), parameters('tagsByResource')['Microsoft.Network/networkSecurityGroups'], createObject())]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": true,
+        "defaultToOAuthAuthentication": false,
+        "accessTier": "[parameters('storageAccessTier')]",
+        "publicNetworkAccess": "Disabled",
+        "allowCrossTenantReplication": false,
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Deny",
+          "ipRules": []
+        },
+        "dnsEndpointType": "Standard",
+        "isHnsEnabled": "[parameters('storageIsHnsEnabled')]",
+        "isSftpEnabled": "[parameters('storageIsSftpEnabled')]",
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            },
+            "table": {
+              "enabled": true
+            },
+            "queue": {
+              "enabled": true
+            }
+          },
+          "requireInfrastructureEncryption": false
+        }
+      },
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "[parameters('storageKind')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Storage/storageAccounts'), parameters('tagsByResource')['Microsoft.Storage/storageAccounts'], createObject())]"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "properties": {
+        "deleteRetentionPolicy": {
+          "enabled": false
+        },
+        "containerDeleteRetentionPolicy": {
+          "enabled": false
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+      "properties": {
+        "shareDeleteRetentionPolicy": {
+          "enabled": false
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2023-04-01",
+      "name": "[format('pep-{0}', parameters('storageAccountName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('pepconn-{0}', parameters('storageAccountName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "groupIds": [
+                "blob"
+              ]
+            }
+          }
+        ],
+        "manualPrivateLinkServiceConnections": [],
+        "subnet": {
+          "id": "[variables('subnetId_Pep')]"
+        }
+      },
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Storage/storageAccounts'), parameters('tagsByResource')['Microsoft.Storage/storageAccounts'], createObject())]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "privatelink.blob.core.windows.net",
+      "location": "global",
+      "tags": {},
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('storageAccountName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[format('{0}/{1}', string('privatelink.blob.core.windows.net'), uniqueString(variables('virtualNetworkId')))]",
+      "location": "global",
+      "properties": {
+        "virtualNetwork": {
+          "id": "[variables('virtualNetworkId')]"
+        },
+        "registrationEnabled": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('pep-{0}', parameters('storageAccountName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('storageAccountName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('logicAppName')]",
+      "kind": "functionapp,workflowapp",
+      "location": "[parameters('location')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Web/sites'), parameters('tagsByResource')['Microsoft.Web/sites'], createObject())]",
+      "properties": {
+        "name": "[parameters('logicAppName')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~18"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "logapp-aoai-test-028765"
+            },
+            {
+              "name": "AzureFunctionsJobHost__extensionBundle__id",
+              "value": "Microsoft.Azure.Functions.ExtensionBundle.Workflows"
+            },
+            {
+              "name": "AzureFunctionsJobHost__extensionBundle__version",
+              "value": "[1.*, 2.0.0)"
+            },
+            {
+              "name": "APP_KIND",
+              "value": "workflowApp"
+            }
+          ],
+          "cors": {},
+          "use32BitWorkerProcess": false,
+          "ftpsState": "FtpsOnly",
+          "vnetPrivatePortsCount": "[parameters('vnetPrivatePortsCount')]",
+          "netFrameworkVersion": "[parameters('netFrameworkVersion')]"
+        },
+        "clientAffinityEnabled": false,
+        "virtualNetworkSubnetId": "[variables('subnetId_ViLog')]",
+        "publicNetworkAccess": "Disabled",
+        "vnetRouteAllEnabled": true,
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "kind": "",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Web/sites'), parameters('tagsByResource')['Microsoft.Web/sites'], createObject())]",
+      "properties": {
+        "name": "[parameters('hostingPlanName')]",
+        "workerSize": "[parameters('hostingPlanWorkerSize')]",
+        "workerSizeId": "[parameters('hostingPlanWorkerSizeId')]",
+        "numberOfWorkers": "[parameters('numberOfWorkers')]",
+        "maximumElasticWorkerCount": "20",
+        "zoneRedundant": false
+      },
+      "sku": {
+        "tier": "[parameters('hostingPlanSku')]",
+        "name": "[parameters('hostingPlanSkuCode')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[format('pep-{0}', parameters('logicAppName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[variables('subnetId_Pep')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('pepconn-{0}', parameters('logicAppName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('logicAppName'))]",
+              "groupIds": [
+                "sites"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('logicAppName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "privatelink.azurewebsites.net",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('funcAppName')))]",
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('pep-{0}', parameters('logicAppName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[format('{0}/{1}', 'privatelink.azurewebsites.net', format('{0}-link', parameters('logicAppName')))]",
+      "location": "global",
+      "properties": {
+        "virtualNetwork": {
+          "id": "[variables('virtualNetworkId')]"
+        },
+        "registrationEnabled": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[parameters('aspStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Storage/storageAccounts'), parameters('tagsByResource')['Microsoft.Storage/storageAccounts'], createObject())]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "defaultToOAuthAuthentication": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('funcAppName')]",
+      "kind": "functionapp,linux",
+      "location": "[parameters('location')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Web/sites'), parameters('tagsByResource')['Microsoft.Web/sites'], createObject())]",
+      "properties": {
+        "name": "[parameters('funcAppName')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "python"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName')), '2019-06-01').keys[0].value)]"
+            }
+          ],
+          "cors": {
+            "allowedOrigins": [
+              "https://portal.azure.com"
+            ]
+          },
+          "use32BitWorkerProcess": false,
+          "ftpsState": "FtpsOnly",
+          "linuxFxVersion": "[parameters('linuxFxVersion')]",
+          "alwaysOn": "[parameters('funcAlwaysOn')]"
+        },
+        "clientAffinityEnabled": false,
+        "virtualNetworkSubnetId": "[variables('subnetId_ViFnc')]",
+        "publicNetworkAccess": "Disabled",
+        "vnetRouteAllEnabled": true,
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanNameFunc'))]"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanNameFunc'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('hostingPlanNameFunc')]",
+      "location": "[parameters('location')]",
+      "kind": "linux",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Web/sites'), parameters('tagsByResource')['Microsoft.Web/sites'], createObject())]",
+      "properties": {
+        "name": "[parameters('hostingPlanNameFunc')]",
+        "workerSize": "[parameters('hostingPlanWorkerSizeFunc')]",
+        "workerSizeId": "[parameters('hostingPlanWorkerSizeIdFunc')]",
+        "numberOfWorkers": "[parameters('numberOfWorkersFunc')]",
+        "reserved": true,
+        "zoneRedundant": false
+      },
+      "sku": {
+        "tier": "[parameters('hostingPlanSkuFunc')]",
+        "name": "[parameters('hostingPlanSkuCodeFunc')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[format('pep-{0}', parameters('funcAppName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[variables('subnetId_Pep')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('pepconn-{0}', parameters('funcAppName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('funcAppName'))]",
+              "groupIds": [
+                "sites"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('funcAppName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('pep-{0}', parameters('funcAppName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "privatelink.azurewebsites.net-config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('funcAppName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('openAiName')]",
+      "location": "[parameters('location')]",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.CognitiveServices/accounts'), parameters('tagsByResource')['Microsoft.CognitiveServices/accounts'], createObject())]",
+      "sku": {
+        "name": "[parameters('openAiSku')]"
+      },
+      "kind": "OpenAI",
+      "properties": {
+        "customSubDomainName": "[toLower(parameters('openAiName'))]",
+        "publicNetworkAccess": "Disabled",
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "virtualNetworkRules": [],
+          "ipRules": []
+        }
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[format('pep-{0}', parameters('openAiName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[variables('subnetId_Pep')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('pepconn-{0}', parameters('openAiName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAiName'))]",
+              "groupIds": [
+                "account"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAiName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "privatelink.openai.azure.com",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('openAiName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('pep-{0}', parameters('openAiName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "privatelink-cognitiveservices",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('openAiName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[format('{0}/{1}', 'privatelink.openai.azure.com', format('{0}-link', parameters('openAiName')))]",
+      "location": "global",
+      "properties": {
+        "virtualNetwork": {
+          "id": "[variables('virtualNetworkId')]"
+        },
+        "registrationEnabled": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('openAiName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('aiSpeechName')]",
+      "location": "[parameters('location')]",
+      "kind": "SpeechServices",
+      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.CognitiveServices/accounts'), parameters('tagsByResource')['Microsoft.CognitiveServices/accounts'], createObject())]",
+      "sku": {
+        "name": "[parameters('aiSpeechSku')]"
+      },
+      "properties": {
+        "customSubDomainName": "[toLower(parameters('aiSpeechName'))]",
+        "publicNetworkAccess": "Disabled",
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "virtualNetworkRules": [],
+          "ipRules": []
+        }
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[format('pep-{0}', parameters('aiSpeechName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[variables('subnetId_Pep')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('pepconn-{0}', parameters('aiSpeechName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiSpeechName'))]",
+              "groupIds": [
+                "account"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiSpeechName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2018-09-01",
+      "name": "privatelink.cognitiveservices.azure.com",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('aiSpeechName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('pep-{0}', parameters('aiSpeechName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "privatelink-cognitiveservices",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.cognitiveservices.azure.com')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('aiSpeechName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.cognitiveservices.azure.com')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2018-09-01",
+      "name": "[format('{0}/{1}', 'privatelink.cognitiveservices.azure.com', format('{0}-link', parameters('aiSpeechName')))]",
+      "location": "global",
+      "properties": {
+        "virtualNetwork": {
+          "id": "[variables('virtualNetworkId')]"
+        },
+        "registrationEnabled": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('aiSpeechName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.cognitiveservices.azure.com')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    }
+  ]
 }
