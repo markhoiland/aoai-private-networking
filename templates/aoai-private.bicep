@@ -67,6 +67,8 @@ param tagsByResource object = {
 
 var virtualNetworkId = virtualNetwork.id
 var subnetId_Pep = '${virtualNetworkId}/subnets/${subnetName_Pep}'
+var subnetId_ViLog = '${virtualNetworkId}/subnets/${subnetName_ViLog}'
+var subnetId_ViFnc = '${virtualNetworkId}/subnets/${subnetName_ViFnc}'
 var networkSecurityGroupId = networkSecurityGroup.id
 var privateEndpointResourceId = pep_storageAccount.id
 
@@ -99,6 +101,21 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
           networkSecurityGroup: {
             id: networkSecurityGroupId
           }
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.Web/serverfarms'
+              }
+            }
+          ]
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
         }
       }
       {
@@ -188,7 +205,7 @@ resource storageAccountName_default 'Microsoft.Storage/storageAccounts/blobServi
   }
 }
 
-resource Microsoft_Storage_storageAccounts_fileservices_storageAccountName_default 'Microsoft.Storage/storageAccounts/fileservices@2022-05-01' = {
+resource storageAccountName_file_default 'Microsoft.Storage/storageAccounts/fileservices@2022-05-01' = {
   parent: storageAccount
   name: 'default'
   properties: {
@@ -197,7 +214,6 @@ resource Microsoft_Storage_storageAccounts_fileservices_storageAccountName_defau
     }
   }
   dependsOn: [
-
     storageAccountName_default
   ]
 }
@@ -222,10 +238,10 @@ resource pep_storageAccount 'Microsoft.Network/privateEndpoints@2023-04-01' = {
       id: subnetId_Pep
     }
   }
-  tags: {}
+  tags: (contains(tagsByResource, 'Microsoft.Storage/storageAccounts') ? tagsByResource['Microsoft.Storage/storageAccounts'] : {})
 }
 
-resource privatelink_blob_core_windows_net 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+resource privateDnsZone_blob 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   name: 'privatelink.blob.core.windows.net'
   location: 'global'
   tags: {}
@@ -235,7 +251,7 @@ resource privatelink_blob_core_windows_net 'Microsoft.Network/privateDnsZones@20
   ]
 }
 
-resource privatelink_blob_core_windows_net_virtualNetworkId 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource privateDnsZone_blob_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
   name: '${string('privatelink.blob.core.windows.net')}/${uniqueString(virtualNetworkId)}'
   location: 'global'
   properties: {
@@ -245,11 +261,11 @@ resource privatelink_blob_core_windows_net_virtualNetworkId 'Microsoft.Network/p
     registrationEnabled: true
   }
   dependsOn: [
-    privatelink_blob_core_windows_net
+    privateDnsZone_blob
   ]
 }
 
-resource Microsoft_Network_privateEndpoints_privateDnsZoneGroups_storageAccount 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+resource privateDnsZoneGroups_blob 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
   parent: pep_storageAccount
   name: 'default'
   properties: {
@@ -263,6 +279,6 @@ resource Microsoft_Network_privateEndpoints_privateDnsZoneGroups_storageAccount 
     ]
   }
   dependsOn: [
-    privatelink_blob_core_windows_net
+    privateDnsZone_blob
   ]
 }

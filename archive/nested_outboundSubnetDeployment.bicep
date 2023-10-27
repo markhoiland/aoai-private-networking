@@ -15,7 +15,12 @@ resource vnet_aoai_test_02_logapp_vi 'Microsoft.Network/virtualNetworks/subnets@
       }
     ]
     provisioningState: 'Succeeded'
-    addressPrefix: '10.1.1.0/24'
+    addressPrefixes: [
+      '10.0.1.0/24'
+    ]
+    networkSecurityGroup: {
+      id: '/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/rg-aoai-test-02/providers/Microsoft.Network/networkSecurityGroups/nsg-aoai-test-02'
+    }
     privateEndpointNetworkPolicies: 'Disabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
   }

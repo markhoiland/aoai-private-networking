@@ -98,7 +98,7 @@
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
-                            "value": "logapp-aoai-test-02bb9d"
+                            "value": "logapp-aoai-test-028765"
                         },
                         {
                             "name": "AzureFunctionsJobHost__extensionBundle__id",
@@ -174,19 +174,19 @@
                                 "serviceEndpoints": [],
                                 "provisioningState": "Succeeded",
                                 "addressPrefixes": [
-                                    "10.1.0.0/24"
+                                    "10.0.0.0/24"
                                 ],
                                 "networkSecurityGroup": {
                                     "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/rg-aoai-test-02/providers/Microsoft.Network/networkSecurityGroups/nsg-aoai-test-02"
                                 },
                                 "ipConfigurations": [
                                     {
-                                        "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/RG-AOAI-TEST-02/providers/Microsoft.Network/networkInterfaces/PEP-STAOAITEST02.NIC.7D25C2CA-8665-4E0A-9215-19D1032C7718/ipConfigurations/PRIVATEENDPOINTIPCONFIG.3738F364-F046-4806-8A10-2AEEE34C7DD0"
+                                        "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/RG-AOAI-TEST-02/providers/Microsoft.Network/networkInterfaces/PEP-SAAOAITEST02.NIC.79831FF0-C137-48FB-A291-E0251AF00338/ipConfigurations/PRIVATEENDPOINTIPCONFIG.D11B9EE7-C410-4144-9319-F32804195795"
                                     }
                                 ],
                                 "privateEndpoints": [
                                     {
-                                        "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/RG-AOAI-TEST-02/providers/Microsoft.Network/privateEndpoints/PEP-STAOAITEST02"
+                                        "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/RG-AOAI-TEST-02/providers/Microsoft.Network/privateEndpoints/PEP-SAAOAITEST02"
                                     }
                                 ],
                                 "purpose": "PrivateEndpoints",
@@ -232,7 +232,12 @@
                                     }
                                 ],
                                 "provisioningState": "Succeeded",
-                                "addressPrefix": "10.1.1.0/24",
+                                "addressPrefixes": [
+                                    "10.0.1.0/24"
+                                ],
+                                "networkSecurityGroup": {
+                                    "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/rg-aoai-test-02/providers/Microsoft.Network/networkSecurityGroups/nsg-aoai-test-02"
+                                },
                                 "privateEndpointNetworkPolicies": "Disabled",
                                 "privateLinkServiceNetworkPolicies": "Enabled"
                             }

@@ -52,7 +52,7 @@ resource name_resource 'Microsoft.Web/sites@2018-11-01' = {
         }
         {
           name: 'WEBSITE_CONTENTSHARE'
-          value: 'logapp-aoai-test-02bb9d'
+          value: 'logapp-aoai-test-028765'
         }
         {
           name: 'AzureFunctionsJobHost__extensionBundle__id'

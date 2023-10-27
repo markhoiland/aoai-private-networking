@@ -1,0 +1,363 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "northcentralus",
+            "metadata": {
+                "description": "Azure region for the deployment, resource group and resources."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "vnet-aoai-test-02",
+            "metadata": {
+                "description": "Name of the virtual network resource."
+            }
+        },
+        "addressPrefixes": {
+            "type": "array",
+            "defaultValue": [
+                "10.1.0.0/16"
+            ],
+            "metadata": {
+                "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
+            }
+        },
+        "subnetName-Pep": {
+            "type": "string",
+            "defaultValue": "private-endpoint",
+            "metadata": {
+                "description": "Name of the private endpoint subnet for this virtual network."
+            }
+        },
+        "subnetPrefix-Pep": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/24",
+            "metadata": {
+                "description": "Address block reserved for the private endpoint subnet, in CIDR notation."
+            }
+        },
+        "subnetName-ViLog": {
+            "type": "string",
+            "defaultValue": "logapp-vi",
+            "metadata": {
+                "description": "Name of the Logic App VNet integration  subnet for this virtual network."
+            }
+        },
+        "subnetPrefix-ViLog": {
+            "type": "string",
+            "defaultValue": "10.1.1.0/24",
+            "metadata": {
+                "description": "Address block reserved for the Logic App VNet integration  subnet, in CIDR notation."
+            }
+        },
+        "subnetName-ViFnc": {
+            "type": "string",
+            "defaultValue": "funcapp-vi",
+            "metadata": {
+                "description": "Name of the Function App VNet integration subnet for this virtual network."
+            }
+        },
+        "subnetPrefix-ViFnc": {
+            "type": "string",
+            "defaultValue": "10.1.2.0/24",
+            "metadata": {
+                "description": "Address block reserved for the Function App VNet integration subnet, in CIDR notation."
+            }
+        },
+        "networkSecurityGroupName": {
+            "type": "string",
+            "defaultValue": "nsg-aoai-test-02",
+            "metadata": {
+                "description": "Name of the network security group."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "staoaitest02",
+            "metadata": {
+                "description": "Name of the storage account."
+            }
+        },
+        "storageAccessTier": {
+            "type": "string",
+            "defaultValue": "Hot",
+            "allowedValues": [
+                "Hot",
+                "Cool"
+            ],
+            "metadata": {
+                "description": "Access tier for the storage account."
+            }
+        },
+        "storageIsHnsEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable Hierarchical Namespace for the storage account."
+            }
+        },
+        "storageIsSftpEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Enable SFTP for the storage account."
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "Replication type for storage account."
+            }
+        },
+        "storageKind": {
+            "type": "string",
+            "defaultValue": "StorageV2",
+            "metadata": {
+                "description": "Kind of storage account."
+            }
+        },
+        "tagsByResource": {
+            "type": "object",
+            "defaultValue": {
+                "Microsoft.Network/virtualNetworks": {
+                    "environment": "poc"
+                },
+                "Microsoft.Network/networkSecurityGroups": {
+                    "environment": "poc"
+                },
+                "Microsoft.Storage/storageAccounts": {
+                    "environment": "poc"
+                }
+            },
+            "metadata": {
+                "description": "Optional tags for the resources."
+            }
+        }
+    },
+    "variables": {
+        "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "subnetId-Pep": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName-Pep'))]",
+        "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "privateEndpointResourceId": "[resourceId('Microsoft.Network/privateEndpoints', concat('pep-', parameters('storageAccountName')))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2021-05-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/virtualNetworks'), parameters('tagsByResource')['Microsoft.Network/virtualNetworks'], createObject())]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "subnets": [
+                {
+                    "name": "[parameters('subnetName-Pep')]",
+                    "properties": {
+                        "addressPrefixes": [
+                            "[parameters('subnetPrefix-Pep')]"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[variables('networkSecurityGroupId')]"
+                        }
+                    }
+                },
+                {
+                    "name": "[parameters('subnetName-ViLog')]",
+                    "properties": {
+                        "addressPrefixes": [
+                            "[parameters('subnetPrefix-ViLog')]"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[variables('networkSecurityGroupId')]"
+                        }
+                    }
+                },
+                {
+                    "name": "[parameters('subnetName-ViFnc')]",
+                    "properties": {
+                        "addressPrefixes": [
+                            "[parameters('subnetPrefix-ViFnc')]"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[variables('networkSecurityGroupId')]"
+                        }
+                    }
+                }
+                
+            ],
+                "enableDdosProtection": false,
+                "encryption": {
+                    "enabled": false,
+                    "enforcement": "AllowUnencrypted"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/networkSecurityGroups'), parameters('tagsByResource')['Microsoft.Network/networkSecurityGroups'], createObject())]",
+            "properties": {}
+        },
+        {
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2022-05-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": true,
+                "defaultToOAuthAuthentication": false,
+                "accessTier": "[parameters('storageAccessTier')]",
+                "publicNetworkAccess": "Disabled",
+                "allowCrossTenantReplication": false,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Deny",
+                    "ipRules": []
+                },
+                "dnsEndpointType": "Standard",
+                "isHnsEnabled": "[parameters('storageIsHnsEnabled')]",
+                "isSftpEnabled": "[parameters('storageIsSftpEnabled')]",
+                "encryption": {
+                    "keySource": "Microsoft.Storage",
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        },
+                        "table": {
+                            "enabled": true
+                        },
+                        "queue": {
+                            "enabled": true
+                        }
+                    },
+                    "requireInfrastructureEncryption": false
+                }
+            },
+            "dependsOn": [],
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "[parameters('storageKind')]",
+            "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Storage/storageAccounts'), parameters('tagsByResource')['Microsoft.Storage/storageAccounts'], createObject())]"
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default')]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2022-05-01",
+            "properties": {
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                },
+                "containerDeleteRetentionPolicy": {
+                    "enabled": false
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default')]",
+            "type": "Microsoft.Storage/storageAccounts/fileservices",
+            "apiVersion": "2022-05-01",
+            "properties": {
+                "shareDeleteRetentionPolicy": {
+                    "enabled": false
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '/blobServices/default')]"
+            ]
+        },
+        {
+            "apiVersion": "2023-04-01",
+            "name": "[concat('pep-', parameters('storageAccountName'))]",
+            "type": "Microsoft.Network/privateEndpoints",
+            "location": "[parameters('location')]",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[concat('pepconn-', parameters('storageAccountName'))]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                            "groupIds": [
+                                "blob"
+                            ]
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "subnet": {
+                    "id": "[variables('subnetId-Pep')]"
+                }
+            },
+            "tags": {},
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[string('privatelink.blob.core.windows.net')]",
+            "location": "global",
+            "dependsOn": [
+                "[concat('Microsoft.Network/privateEndpoints/', 'pep-', parameters('storageAccountName'))]"
+            ],
+            "tags": {},
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(string('privatelink.blob.core.windows.net'), '/', uniqueString(variables('virtualNetworkId')))]",
+            "location": "global",
+            "dependsOn": [
+                "[string('privatelink.blob.core.windows.net')]"
+            ],
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[variables('virtualNetworkId')]"
+                },
+                "registrationEnabled": true
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-05-01",
+            "name": "[parameters('storageAccountName')]",
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "config",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', concat('pep-', parameters('storageAccountName')))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]"
+            ]
+        }
+    ]
+}

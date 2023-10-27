@@ -13,23 +13,11 @@
                 "10.0.0.0/16"
             ]
         },
-        "subnetName_Pep": {
+        "subnetName-Pep": {
             "value": "private-endpoint"
         },
-        "subnetPrefix_Pep": {
+        "subnetPrefix-Pep": {
             "value": "10.0.0.0/24"
-        },
-        "subnetName_ViLog": {
-            "value": "logapp-vi"
-        },
-        "subnetPrefix_ViLog": {
-            "value": "10.0.1.0/24"
-        },
-        "subnetName_ViFnc": {
-            "value": "funcapp-vi"
-        },
-        "subnetPrefix_ViFnc": {
-            "value": "10.0.2.0/24"
         },
         "networkSecurityGroupName": {
             "value": "nsg-aoai-test-02"
@@ -58,9 +46,6 @@
                     "environment": "poc"
                 },
                 "Microsoft.Network/networkSecurityGroups": {
-                    "environment": "poc"
-                },
-                "Microsoft.Storage/storageAccounts": {
                     "environment": "poc"
                 }
             }
