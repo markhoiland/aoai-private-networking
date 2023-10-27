@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.14.85.62628",
-      "templateHash": "11089758570339853440"
+      "templateHash": "16902609007618178694"
     }
   },
   "parameters": {
@@ -204,6 +204,83 @@
     "vnetPrivatePortsCount": {
       "type": "int",
       "defaultValue": 2
+    },
+    "funcAppName": {
+      "type": "string",
+      "defaultValue": "funcapp-aoai-test-02",
+      "metadata": {
+        "description": "Name of the Function App."
+      }
+    },
+    "linuxFxVersion": {
+      "type": "string",
+      "defaultValue": "Python|3.11",
+      "metadata": {
+        "description": "Language and version for the language-specific worker process. For example, \"Python|3.11\"."
+      }
+    },
+    "hostingPlanNameFunc": {
+      "type": "string",
+      "defaultValue": "aspfnc-aoai-test-02",
+      "metadata": {
+        "description": "Name of the Function App hosting plan / server farm."
+      }
+    },
+    "hostingPlanSkuFunc": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "PremiumV2",
+        "PremiumV3"
+      ],
+      "metadata": {
+        "description": "Hosting Plan / Server Farm SKU for the Function App."
+      }
+    },
+    "hostingPlanSkuCodeFunc": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "B1",
+        "P1V2",
+        "P1V3",
+        "P2V2",
+        "P2V3",
+        "P3V2",
+        "P3V3"
+      ],
+      "metadata": {
+        "description": "Hosting Plan / Server Farm SKU code for the Function App."
+      }
+    },
+    "hostingPlanWorkerSizeFunc": {
+      "type": "string",
+      "defaultValue": "6",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm worker size for the Function App."
+      }
+    },
+    "hostingPlanWorkerSizeIdFunc": {
+      "type": "string",
+      "defaultValue": "6",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm worker size ID for the Function App."
+      }
+    },
+    "numberOfWorkersFunc": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Hosting Plan / Server Farm number of workers for the Function App."
+      }
+    },
+    "funcAlwaysOn": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "AlwaysOn setting for the Function App. True or False."
+      }
     }
   },
   "variables": {
@@ -585,6 +662,7 @@
       "name": "privatelink.azurewebsites.net",
       "location": "global",
       "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('funcAppName')))]",
         "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]"
       ]
     },
@@ -639,6 +717,117 @@
         "minimumTlsVersion": "TLS1_2",
         "defaultToOAuthAuthentication": true
       }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('funcAppName')]",
+      "kind": "functionapp,linux",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "properties": {
+        "name": "[parameters('funcAppName')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "python"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName')), '2019-06-01').keys[0].value)]"
+            }
+          ],
+          "cors": {
+            "allowedOrigins": [
+              "https://portal.azure.com"
+            ]
+          },
+          "use32BitWorkerProcess": false,
+          "ftpsState": "FtpsOnly",
+          "linuxFxVersion": "[parameters('linuxFxVersion')]",
+          "alwaysOn": "[parameters('funcAlwaysOn')]"
+        },
+        "clientAffinityEnabled": false,
+        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName_ViFnc'))]",
+        "publicNetworkAccess": "Disabled",
+        "vnetRouteAllEnabled": true,
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanNameFunc'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanNameFunc'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('hostingPlanNameFunc')]",
+      "location": "[parameters('location')]",
+      "kind": "linux",
+      "tags": {},
+      "properties": {
+        "name": "[parameters('hostingPlanNameFunc')]",
+        "workerSize": "[parameters('hostingPlanWorkerSizeFunc')]",
+        "workerSizeId": "[parameters('hostingPlanWorkerSizeIdFunc')]",
+        "numberOfWorkers": "[parameters('numberOfWorkersFunc')]",
+        "reserved": true,
+        "zoneRedundant": false
+      },
+      "sku": {
+        "tier": "[parameters('hostingPlanSkuFunc')]",
+        "name": "[parameters('hostingPlanSkuCodeFunc')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2021-02-01",
+      "name": "[format('pep-{0}', parameters('funcAppName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[variables('subnetId_Pep')]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "[format('pepconn-{0}', parameters('funcAppName'))]",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('funcAppName'))]",
+              "groupIds": [
+                "sites"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('funcAppName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[format('{0}/{1}', format('pep-{0}', parameters('funcAppName')), 'default')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "privatelink.azurewebsites.net-config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('funcAppName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+      ]
     }
   ]
 }

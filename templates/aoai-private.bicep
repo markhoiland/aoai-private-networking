@@ -90,6 +90,50 @@ param hostingPlanWorkerSizeId string = '3'
 param numberOfWorkers string = '1'
 param vnetPrivatePortsCount int = 2
 
+/////Function App Params/////
+@description('Name of the Function App.')
+param funcAppName string = 'funcapp-aoai-test-02'
+
+@description('Language and version for the language-specific worker process. For example, "Python|3.11".')
+param linuxFxVersion string = 'Python|3.11'
+
+@description('Name of the Function App hosting plan / server farm.')
+param hostingPlanNameFunc string = 'aspfnc-aoai-test-02'
+
+@description('Hosting Plan / Server Farm SKU for the Function App.')
+@allowed([
+  'Basic'
+  'PremiumV2'
+  'PremiumV3'
+])
+param hostingPlanSkuFunc string = 'Basic'
+
+@description('Hosting Plan / Server Farm SKU code for the Function App.')
+@allowed(
+  [
+    'B1'
+    'P1V2'
+    'P1V3'
+    'P2V2'
+    'P2V3'
+    'P3V2'
+    'P3V3'
+  ]
+)
+param hostingPlanSkuCodeFunc string = 'B1'
+
+@description('Hosting Plan / Server Farm worker size for the Function App.')
+param hostingPlanWorkerSizeFunc string = '6'
+
+@description('Hosting Plan / Server Farm worker size ID for the Function App.')
+param hostingPlanWorkerSizeIdFunc string = '6'
+
+@description('Hosting Plan / Server Farm number of workers for the Function App.')
+param numberOfWorkersFunc string = '1'
+
+@description('AlwaysOn setting for the Function App. True or False.')
+param funcAlwaysOn bool = false
+
 var virtualNetworkId = virtualNetwork.id
 var subnetId_Pep = '${virtualNetworkId}/subnets/${subnetName_Pep}'
 var subnetId_ViLog = '${virtualNetworkId}/subnets/${subnetName_ViLog}'
@@ -444,6 +488,7 @@ resource privateDnsZone_website 'Microsoft.Network/privateDnsZones@2018-09-01' =
   location: 'global'
   dependsOn: [
     pep_logicApp
+    pep_funcApp
   ]
 }
 
@@ -493,4 +538,107 @@ resource aspStorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     minimumTlsVersion: 'TLS1_2'
     defaultToOAuthAuthentication: true
   }
+}
+
+/////Function App Resources/////
+
+resource funcApp_site 'Microsoft.Web/sites@2018-11-01' = {
+  name: funcAppName
+  kind: 'functionapp,linux'
+  location: location
+  tags: {}
+  properties: {
+    name: funcAppName
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'python'
+        }
+        {
+          name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(aspStorageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+        }
+      ]
+      cors: {
+        allowedOrigins: [
+          'https://portal.azure.com'
+        ]
+      }
+      use32BitWorkerProcess: false
+      ftpsState: 'FtpsOnly'
+      linuxFxVersion: linuxFxVersion
+      alwaysOn: funcAlwaysOn
+    }
+    clientAffinityEnabled: false
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName_ViFnc)
+    publicNetworkAccess: 'Disabled'
+    vnetRouteAllEnabled: true
+    httpsOnly: true
+    serverFarmId: funcAppHostingPlan.id
+  }
+  dependsOn: []
+}
+
+resource funcAppHostingPlan 'Microsoft.Web/serverfarms@2018-11-01' = {
+  name: hostingPlanNameFunc
+  location: location
+  kind: 'linux'
+  tags: {}
+  properties: {
+    name: hostingPlanNameFunc
+    workerSize: hostingPlanWorkerSizeFunc
+    workerSizeId: hostingPlanWorkerSizeIdFunc
+    numberOfWorkers: numberOfWorkersFunc
+    reserved: true
+    zoneRedundant: false
+  }
+  sku: {
+    tier: hostingPlanSkuFunc
+    name: hostingPlanSkuCodeFunc
+  }
+  dependsOn: []
+}
+
+resource pep_funcApp 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+  name: 'pep-${funcAppName}'
+  location: location
+  properties: {
+    subnet: {
+      id: subnetId_Pep
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pepconn-${funcAppName}'
+        properties: {
+          privateLinkServiceId: funcApp_site.id
+          groupIds: [
+            'sites'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZoneGroups_websiteFunc 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: pep_funcApp
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink.azurewebsites.net-config'
+        properties: {
+          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    privateDnsZone_website
+  ]
 }
