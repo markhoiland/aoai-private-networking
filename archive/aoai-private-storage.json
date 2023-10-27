@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.14.85.62628",
-      "templateHash": "9445031142910445770"
+      "templateHash": "15662157155004211800"
     }
   },
   "parameters": {
@@ -138,82 +138,16 @@
         },
         "Microsoft.Storage/storageAccounts": {
           "environment": "poc"
-        },
-        "Microsoft.Web/sites": {
-          "environment": "poc"
         }
       },
       "metadata": {
         "description": "Optional tags for the resources."
       }
-    },
-    "logicAppName": {
-      "type": "string",
-      "defaultValue": "logapp-aoai-test-02",
-      "metadata": {
-        "description": "Name of the Login App."
-      }
-    },
-    "aspStorageAccountName": {
-      "type": "string",
-      "defaultValue": "staoaitestasp02",
-      "metadata": {
-        "description": "Name of the storage account for Logic and Function Apps."
-      }
-    },
-    "netFrameworkVersion": {
-      "type": "string",
-      "defaultValue": "v6.0",
-      "metadata": {
-        "description": ".NET Framework version."
-      }
-    },
-    "hostingPlanName": {
-      "type": "string",
-      "defaultValue": "asplog-aoai-test-02",
-      "metadata": {
-        "description": "Name of the hosting plan / server farm."
-      }
-    },
-    "hostingPlanSku": {
-      "type": "string",
-      "defaultValue": "WorkflowStandard",
-      "metadata": {
-        "description": "Hosting Plan / Server Farm SKU."
-      }
-    },
-    "hostingPlanSkuCode": {
-      "type": "string",
-      "defaultValue": "WS1",
-      "metadata": {
-        "description": "Hosting Plan / Server Farm SKU code."
-      }
-    },
-    "hostingPlanWorkerSize": {
-      "type": "string",
-      "defaultValue": "3"
-    },
-    "hostingPlanWorkerSizeId": {
-      "type": "string",
-      "defaultValue": "3"
-    },
-    "numberOfWorkers": {
-      "type": "string",
-      "defaultValue": "1"
-    },
-    "serverFarmResourceGroup": {
-      "type": "string"
-    },
-    "vnetPrivatePortsCount": {
-      "type": "int",
-      "defaultValue": 2
     }
   },
   "variables": {
     "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "subnetId_Pep": "[format('{0}/subnets/{1}', variables('virtualNetworkId'), parameters('subnetName_Pep'))]",
-    "subnetId_ViLog": "[format('{0}/subnets/{1}', variables('virtualNetworkId'), parameters('subnetName_ViLog'))]",
-    "subnetId_ViFnc": "[format('{0}/subnets/{1}', variables('virtualNetworkId'), parameters('subnetName_ViFnc'))]",
     "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
     "privateEndpointResourceId": "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('storageAccountName')))]"
   },
@@ -248,22 +182,7 @@
               ],
               "networkSecurityGroup": {
                 "id": "[variables('networkSecurityGroupId')]"
-              },
-              "delegations": [
-                {
-                  "name": "delegation",
-                  "properties": {
-                    "serviceName": "Microsoft.Web/serverfarms"
-                  }
-                }
-              ],
-              "serviceEndpoints": [
-                {
-                  "service": "Microsoft.Storage"
-                }
-              ],
-              "privateEndpointNetworkPolicies": "Disabled",
-              "privateLinkServiceNetworkPolicies": "Enabled"
+              }
             }
           },
           {
@@ -395,7 +314,7 @@
           "id": "[variables('subnetId_Pep')]"
         }
       },
-      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Storage/storageAccounts'), parameters('tagsByResource')['Microsoft.Storage/storageAccounts'], createObject())]",
+      "tags": {},
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
@@ -421,7 +340,7 @@
         "virtualNetwork": {
           "id": "[variables('virtualNetworkId')]"
         },
-        "registrationEnabled": false
+        "registrationEnabled": true
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]",
@@ -446,181 +365,6 @@
         "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('storageAccountName')))]",
         "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')]"
       ]
-    },
-    {
-      "type": "Microsoft.Web/sites",
-      "apiVersion": "2018-11-01",
-      "name": "[parameters('logicAppName')]",
-      "kind": "functionapp,workflowapp",
-      "location": "[parameters('location')]",
-      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Web/sites'), parameters('tagsByResource')['Microsoft.Web/sites'], createObject())]",
-      "properties": {
-        "name": "[parameters('logicAppName')]",
-        "siteConfig": {
-          "appSettings": [
-            {
-              "name": "FUNCTIONS_EXTENSION_VERSION",
-              "value": "~4"
-            },
-            {
-              "name": "FUNCTIONS_WORKER_RUNTIME",
-              "value": "node"
-            },
-            {
-              "name": "WEBSITE_NODE_DEFAULT_VERSION",
-              "value": "~18"
-            },
-            {
-              "name": "AzureWebJobsStorage",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
-            },
-            {
-              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
-            },
-            {
-              "name": "WEBSITE_CONTENTSHARE",
-              "value": "logapp-aoai-test-028765"
-            },
-            {
-              "name": "AzureFunctionsJobHost__extensionBundle__id",
-              "value": "Microsoft.Azure.Functions.ExtensionBundle.Workflows"
-            },
-            {
-              "name": "AzureFunctionsJobHost__extensionBundle__version",
-              "value": "[1.*, 2.0.0)"
-            },
-            {
-              "name": "APP_KIND",
-              "value": "workflowApp"
-            }
-          ],
-          "cors": {},
-          "use32BitWorkerProcess": false,
-          "ftpsState": "FtpsOnly",
-          "vnetPrivatePortsCount": "[parameters('vnetPrivatePortsCount')]",
-          "netFrameworkVersion": "[parameters('netFrameworkVersion')]"
-        },
-        "clientAffinityEnabled": false,
-        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-aoai-test-02', 'logapp-vi')]",
-        "publicNetworkAccess": "Disabled",
-        "vnetRouteAllEnabled": true,
-        "httpsOnly": true,
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
-      },
-      "identity": {
-        "type": "SystemAssigned"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2018-11-01",
-      "name": "[parameters('hostingPlanName')]",
-      "location": "[parameters('location')]",
-      "kind": "",
-      "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Web/sites'), parameters('tagsByResource')['Microsoft.Web/sites'], createObject())]",
-      "properties": {
-        "name": "[parameters('hostingPlanName')]",
-        "workerSize": "[parameters('hostingPlanWorkerSize')]",
-        "workerSizeId": "[parameters('hostingPlanWorkerSizeId')]",
-        "numberOfWorkers": "[parameters('numberOfWorkers')]",
-        "maximumElasticWorkerCount": "20",
-        "zoneRedundant": false
-      },
-      "sku": {
-        "tier": "[parameters('hostingPlanSku')]",
-        "name": "[parameters('hostingPlanSkuCode')]"
-      }
-    },
-    {
-      "type": "Microsoft.Network/privateEndpoints",
-      "apiVersion": "2021-02-01",
-      "name": "[format('pep-{0}', parameters('logicAppName'))]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "subnet": {
-          "id": "[variables('subnetId_Pep')]"
-        },
-        "privateLinkServiceConnections": [
-          {
-            "name": "[format('pepconn-{0}', parameters('logicAppName'))]",
-            "properties": {
-              "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', parameters('logicAppName'))]",
-              "groupIds": [
-                "sites"
-              ]
-            }
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('logicAppName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones",
-      "apiVersion": "2018-09-01",
-      "name": "privatelink.azurewebsites.net",
-      "location": "global",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-      "apiVersion": "2020-03-01",
-      "name": "[format('{0}/{1}', format('pep-{0}', parameters('logicAppName')), 'default')]",
-      "properties": {
-        "privateDnsZoneConfigs": [
-          {
-            "name": "config",
-            "properties": {
-              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
-            }
-          }
-        ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-      "apiVersion": "2018-09-01",
-      "name": "[format('{0}/{1}', 'privatelink.azurewebsites.net', format('{0}-link', parameters('logicAppName')))]",
-      "location": "global",
-      "properties": {
-        "virtualNetwork": {
-          "id": "[variables('virtualNetworkId')]"
-        },
-        "registrationEnabled": false
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]",
-        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2022-05-01",
-      "name": "[parameters('aspStorageAccountName')]",
-      "location": "[parameters('location')]",
-      "tags": {},
-      "kind": "StorageV2",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "properties": {
-        "supportsHttpsTrafficOnly": true,
-        "minimumTlsVersion": "TLS1_2",
-        "defaultToOAuthAuthentication": true
-      }
     }
   ]
 }

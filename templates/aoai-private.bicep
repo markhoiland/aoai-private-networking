@@ -63,7 +63,34 @@ param tagsByResource object = {
   'Microsoft.Storage/storageAccounts': {
     environment: 'poc'
   }
+  'Microsoft.Web/sites': {
+    environment: 'poc'
+  }
 }
+/////Logic App Params/////
+@description('Name of the Login App.')
+param logicAppName string = 'logapp-aoai-test-02'
+
+@description('Name of the storage account for Logic and Function Apps.')
+param aspStorageAccountName string = 'staoaitestasp02'
+
+@description('.NET Framework version.')
+param netFrameworkVersion string = 'v6.0'
+
+@description('Name of the hosting plan / server farm.')
+param hostingPlanName string = 'asplog-aoai-test-02'
+
+@description('Hosting Plan / Server Farm SKU.')
+param hostingPlanSku string = 'WorkflowStandard'
+
+@description('Hosting Plan / Server Farm SKU code.')
+param hostingPlanSkuCode string = 'WS1'
+param hostingPlanWorkerSize string = '3'
+param hostingPlanWorkerSizeId string = '3'
+param numberOfWorkers string = '1'
+
+param serverFarmResourceGroup string
+param vnetPrivatePortsCount int = 2
 
 var virtualNetworkId = virtualNetwork.id
 var subnetId_Pep = '${virtualNetworkId}/subnets/${subnetName_Pep}'
@@ -71,6 +98,8 @@ var subnetId_ViLog = '${virtualNetworkId}/subnets/${subnetName_ViLog}'
 var subnetId_ViFnc = '${virtualNetworkId}/subnets/${subnetName_ViFnc}'
 var networkSecurityGroupId = networkSecurityGroup.id
 var privateEndpointResourceId = pep_storageAccount.id
+
+///Network Resources///
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
@@ -144,6 +173,8 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-0
   tags: (contains(tagsByResource, 'Microsoft.Network/networkSecurityGroups') ? tagsByResource['Microsoft.Network/networkSecurityGroups'] : {})
   properties: {}
 }
+
+/////Storage Account Resources/////
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: storageAccountName
@@ -258,7 +289,7 @@ resource privateDnsZone_blob_link 'Microsoft.Network/privateDnsZones/virtualNetw
     virtualNetwork: {
       id: virtualNetworkId
     }
-    registrationEnabled: true
+    registrationEnabled: false
   }
   dependsOn: [
     privateDnsZone_blob
@@ -281,4 +312,167 @@ resource privateDnsZoneGroups_blob 'Microsoft.Network/privateEndpoints/privateDn
   dependsOn: [
     privateDnsZone_blob
   ]
+}
+
+/////Logic App Resources/////
+
+resource logicApp_site 'Microsoft.Web/sites@2018-11-01' = {
+  name: logicAppName
+  kind: 'functionapp,workflowapp'
+  location: location
+  tags: (contains(tagsByResource, 'Microsoft.Web/sites') ? tagsByResource['Microsoft.Web/sites'] : {})
+  properties: {
+    name: logicAppName
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~4'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'node'
+        }
+        {
+          name: 'WEBSITE_NODE_DEFAULT_VERSION'
+          value: '~18'
+        }
+        {
+          name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(storageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(storageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: 'logapp-aoai-test-028765'
+        }
+        {
+          name: 'AzureFunctionsJobHost__extensionBundle__id'
+          value: 'Microsoft.Azure.Functions.ExtensionBundle.Workflows'
+        }
+        {
+          name: 'AzureFunctionsJobHost__extensionBundle__version'
+          value: '[1.*, 2.0.0)'
+        }
+        {
+          name: 'APP_KIND'
+          value: 'workflowApp'
+        }
+      ]
+      cors: {}
+      use32BitWorkerProcess: false
+      ftpsState: 'FtpsOnly'
+      vnetPrivatePortsCount: vnetPrivatePortsCount
+      netFrameworkVersion: netFrameworkVersion
+    }
+    clientAffinityEnabled: false
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-aoai-test-02', 'logapp-vi')
+    publicNetworkAccess: 'Disabled'
+    vnetRouteAllEnabled: true
+    httpsOnly: true
+    serverFarmId: logicAppHostingPlan.id
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  dependsOn: [
+    logicAppHostingPlan
+  ]
+}
+
+resource logicAppHostingPlan 'Microsoft.Web/serverfarms@2018-11-01' = {
+  name: hostingPlanName
+  location: location
+  kind: ''
+  tags: (contains(tagsByResource, 'Microsoft.Web/sites') ? tagsByResource['Microsoft.Web/sites'] : {})
+  properties: {
+    name: hostingPlanName
+    workerSize: hostingPlanWorkerSize
+    workerSizeId: hostingPlanWorkerSizeId
+    numberOfWorkers: numberOfWorkers
+    maximumElasticWorkerCount: '20'
+    zoneRedundant: false
+  }
+  sku: {
+    tier: hostingPlanSku
+    name: hostingPlanSkuCode
+  }
+  dependsOn: []
+}
+
+resource pep_logicApp 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+  name: 'pep-${logicAppName}'
+  location: location
+  properties: {
+    subnet: {
+      id: subnetId_Pep
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pepconn-${logicAppName}'
+        properties: {
+          privateLinkServiceId: logicApp_site.id
+          groupIds: [
+            'sites'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZone_website 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+  name: 'privatelink.azurewebsites.net'
+  location: 'global'
+  dependsOn: [
+    pep_logicApp
+  ]
+}
+
+resource privateDnsZoneGroups_website 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+  parent: pep_logicApp
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config'
+        properties: {
+          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZone_website_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+  parent: privateDnsZone_website
+  name: '${logicAppName}-link'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: virtualNetworkId
+    }
+    registrationEnabled: false
+  }
+  dependsOn: [
+    pep_logicApp
+  ]
+}
+
+resource aspStorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+  name: aspStorageAccountName
+  location: location
+  tags: {}
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  properties: {
+    supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
+    defaultToOAuthAuthentication: true
+  }
 }
