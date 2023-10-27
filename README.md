@@ -1,8 +1,12 @@
-GitHub Copilot: Sure, here's a sample README file for the deployment of the ARM template with a "Deploy to Azure" button:
-
 # Azure OpenAI ARM Template with Private Endpoint and Private DNS Zone
 
-This ARM template deploys an Azure OpenAI resource with a private endpoint and private DNS zone. The private endpoint allows you to securely access the OpenAI resource over a private connection, while the private DNS zone ensures that the OpenAI resource is only accessible through the private endpoint.
+This ARM template deploys an Azure OpenAI resource with a private endpoint and private DNS zone. The private endpoint allows you to securely access the OpenAI resource over a private connection, while the private DNS zone ensures that the OpenAI resource is only accessible through the private endpoint.  Additonal resources deployed for this environment include:
+
+- Azure Storage Accounts
+- Azure Logic App
+- Azure Function App
+- Azure Cognitive Services - Speech to Text
+- Azure Virtual Network
 
 ## Prerequisites
 
@@ -10,8 +14,7 @@ Before deploying this ARM template, you must have the following:
 
 - An Azure subscription
 - A resource group in which to deploy the resources
-- A virtual network with a subnet in which to deploy the private endpoint
-- A DNS zone in which to create the private DNS records
+- Elevated RBAC permissions on the subscription or resource group to deploy resources (ie: Contributor)
 
 ## Deploy to Azure
 
