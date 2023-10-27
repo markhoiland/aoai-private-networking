@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.14.85.62628",
-      "templateHash": "9445031142910445770"
+      "templateHash": "11089758570339853440"
     }
   },
   "parameters": {
@@ -201,9 +201,6 @@
       "type": "string",
       "defaultValue": "1"
     },
-    "serverFarmResourceGroup": {
-      "type": "string"
-    },
     "vnetPrivatePortsCount": {
       "type": "int",
       "defaultValue": 2
@@ -237,7 +234,9 @@
               ],
               "networkSecurityGroup": {
                 "id": "[variables('networkSecurityGroupId')]"
-              }
+              },
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
             }
           },
           {
@@ -274,7 +273,22 @@
               ],
               "networkSecurityGroup": {
                 "id": "[variables('networkSecurityGroupId')]"
-              }
+              },
+              "delegations": [
+                {
+                  "name": "delegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverfarms"
+                  }
+                }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
+                }
+              ],
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled"
             }
           }
         ],
@@ -472,11 +486,11 @@
             },
             {
               "name": "AzureWebJobsStorage",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('aspStorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "WEBSITE_CONTENTSHARE",
@@ -512,8 +526,8 @@
         "type": "SystemAssigned"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('aspStorageAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
       ]
     },
     {
@@ -534,7 +548,10 @@
       "sku": {
         "tier": "[parameters('hostingPlanSku')]",
         "name": "[parameters('hostingPlanSkuCode')]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/privateEndpoints",
@@ -573,7 +590,7 @@
     },
     {
       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-      "apiVersion": "2020-03-01",
+      "apiVersion": "2022-05-01",
       "name": "[format('{0}/{1}', format('pep-{0}', parameters('logicAppName')), 'default')]",
       "properties": {
         "privateDnsZoneConfigs": [
@@ -586,7 +603,8 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]"
+        "[resourceId('Microsoft.Network/privateEndpoints', format('pep-{0}', parameters('logicAppName')))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
       ]
     },
     {

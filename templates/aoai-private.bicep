@@ -88,8 +88,6 @@ param hostingPlanSkuCode string = 'WS1'
 param hostingPlanWorkerSize string = '3'
 param hostingPlanWorkerSizeId string = '3'
 param numberOfWorkers string = '1'
-
-param serverFarmResourceGroup string
 param vnetPrivatePortsCount int = 2
 
 var virtualNetworkId = virtualNetwork.id
@@ -119,6 +117,8 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
           networkSecurityGroup: {
             id: networkSecurityGroupId
           }
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
         }
       }
       {
@@ -156,6 +156,21 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
           networkSecurityGroup: {
             id: networkSecurityGroupId
           }
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.Web/serverfarms'
+              }
+            }
+          ]
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
         }
       }
     ]
@@ -339,11 +354,11 @@ resource logicApp_site 'Microsoft.Web/sites@2018-11-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(storageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(aspStorageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(storageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${aspStorageAccountName};AccountKey=${listKeys(aspStorageAccount.id, '2019-06-01').keys[0].value};EndpointSuffix=core.windows.net'
         }
         {
           name: 'WEBSITE_CONTENTSHARE'
@@ -378,9 +393,7 @@ resource logicApp_site 'Microsoft.Web/sites@2018-11-01' = {
   identity: {
     type: 'SystemAssigned'
   }
-  dependsOn: [
-    logicAppHostingPlan
-  ]
+  dependsOn: []
 }
 
 resource logicAppHostingPlan 'Microsoft.Web/serverfarms@2018-11-01' = {
@@ -400,7 +413,9 @@ resource logicAppHostingPlan 'Microsoft.Web/serverfarms@2018-11-01' = {
     tier: hostingPlanSku
     name: hostingPlanSkuCode
   }
-  dependsOn: []
+  dependsOn: [
+    virtualNetwork
+  ]
 }
 
 resource pep_logicApp 'Microsoft.Network/privateEndpoints@2021-02-01' = {
@@ -432,7 +447,7 @@ resource privateDnsZone_website 'Microsoft.Network/privateDnsZones@2018-09-01' =
   ]
 }
 
-resource privateDnsZoneGroups_website 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+resource privateDnsZoneGroups_website 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
   parent: pep_logicApp
   name: 'default'
   properties: {
@@ -445,6 +460,9 @@ resource privateDnsZoneGroups_website 'Microsoft.Network/privateEndpoints/privat
       }
     ]
   }
+  dependsOn: [
+    privateDnsZone_website
+  ]
 }
 
 resource privateDnsZone_website_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
