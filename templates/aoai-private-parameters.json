@@ -1,0 +1,249 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "northcentralus"
+        },
+        "virtualNetworkName": {
+            "value": "vnet-aoai-test-01",
+            "metadata": {
+            "description": "Name of the virtual network resource."
+          }
+        },
+        "addressPrefixes": {
+          "value": [
+            "10.1.0.0/16"
+          ],
+          "metadata": {
+            "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
+          }
+        },
+        "subnetName_Pep": {
+          "value": "private-endpoint",
+          "metadata": {
+            "description": "Name of the private endpoint subnet for this virtual network."
+          }
+        },
+        "subnetPrefix_Pep": {
+          "value": "10.1.0.0/24",
+          "metadata": {
+            "description": "Address block reserved for the private endpoint subnet, in CIDR notation."
+          }
+        },
+        "subnetName_ViLog": {
+          "value": "logapp-vi",
+          "metadata": {
+            "description": "Name of the Logic App VNet integration  subnet for this virtual network."
+          }
+        },
+        "subnetPrefix_ViLog": {
+          "value": "10.1.1.0/24",
+          "metadata": {
+            "description": "Address block reserved for the Logic App VNet integration  subnet, in CIDR notation."
+          }
+        },
+        "subnetName_ViFnc": {
+          "value": "funcapp-vi",
+          "metadata": {
+            "description": "Name of the Function App VNet integration subnet for this virtual network."
+          }
+        },
+        "subnetPrefix_ViFnc": {
+          "value": "10.1.2.0/24",
+          "metadata": {
+            "description": "Address block reserved for the Function App VNet integration subnet, in CIDR notation."
+          }
+        },
+        "networkSecurityGroupName": {
+          "value": "nsg-aoai-test-01",
+          "metadata": {
+            "description": "Name of the network security group."
+          }
+        },
+        "storageAccountName": {
+          "value": "staoaitest01",
+          "metadata": {
+            "description": "Name of the storage account."
+          }
+        },
+        "storageAccessTier": {
+          "value": "Hot",
+          "metadata": {
+            "description": "Access tier for the storage account."
+          }
+        },
+        "storageIsHnsEnabled": {
+          "value": false,
+          "metadata": {
+            "description": "Enable Hierarchical Namespace for the storage account."
+          }
+        },
+        "storageIsSftpEnabled": {
+          "value": false,
+          "metadata": {
+            "description": "Enable SFTP for the storage account."
+          }
+        },
+        "storageAccountType": {
+          "value": "Standard_LRS",
+          "metadata": {
+            "description": "Replication type for storage account."
+          }
+        },
+        "storageKind": {
+          "value": "StorageV2",
+          "metadata": {
+            "description": "Kind of storage account."
+          }
+        },
+        "tagsByResource": {
+          "value": {
+            "Microsoft.Network/virtualNetworks": {
+              "environment": "poc"
+            },
+            "Microsoft.Network/networkSecurityGroups": {
+              "environment": "poc"
+            },
+            "Microsoft.Storage/storageAccounts": {
+              "environment": "poc"
+            },
+            "Microsoft.Web/sites": {
+              "environment": "poc"
+            },
+            "Microsoft.CognitiveServices/accounts": {
+              "environment": "poc"
+            }
+          },
+          "metadata": {
+            "description": "Optional tags for the resources."
+          }
+        },
+        "logicAppName": {
+          "value": "logapp-aoai-test-01",
+          "metadata": {
+            "description": "Name of the Login App."
+          }
+        },
+        "aspStorageAccountName": {
+          "value": "staoaitestasp01",
+          "metadata": {
+            "description": "Name of the storage account for Logic and Function Apps."
+          }
+        },
+        "netFrameworkVersion": {
+          "value": "v6.0",
+          "metadata": {
+            "description": ".NET Framework version."
+          }
+        },
+        "hostingPlanName": {
+          "value": "asplog-aoai-test-01",
+          "metadata": {
+            "description": "Name of the hosting plan / server farm."
+          }
+        },
+        "hostingPlanSku": {
+          "value": "WorkflowStandard",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm SKU."
+          }
+        },
+        "hostingPlanSkuCode": {
+          "value": "WS1",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm SKU code."
+          }
+        },
+        "hostingPlanWorkerSize": {
+          "value": "3"
+        },
+        "hostingPlanWorkerSizeId": {
+          "value": "3"
+        },
+        "numberOfWorkers": {
+          "value": "1"
+        },
+        "vnetPrivatePortsCount": {
+          "value": 2
+        },
+        "funcAppName": {
+          "value": "funcapp-aoai-test-01",
+          "metadata": {
+            "description": "Name of the Function App."
+          }
+        },
+        "linuxFxVersion": {
+          "value": "Python|3.11",
+          "metadata": {
+            "description": "Language and version for the language-specific worker process. For example, \"Python|3.11\"."
+          }
+        },
+        "hostingPlanNameFunc": {
+          "value": "aspfnc-aoai-test-01",
+          "metadata": {
+            "description": "Name of the Function App hosting plan / server farm."
+          }
+        },
+        "hostingPlanSkuFunc": {
+          "value": "Basic",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm SKU for the Function App."
+          }
+        },
+        "hostingPlanSkuCodeFunc": {
+          "value": "B1",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm SKU code for the Function App."
+          }
+        },
+        "hostingPlanWorkerSizeFunc": {
+          "value": "6",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm worker size for the Function App."
+          }
+        },
+        "hostingPlanWorkerSizeIdFunc": {
+          "value": "6",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm worker size ID for the Function App."
+          }
+        },
+        "numberOfWorkersFunc": {
+          "value": "1",
+          "metadata": {
+            "description": "Hosting Plan / Server Farm number of workers for the Function App."
+          }
+        },
+        "funcAlwaysOn": {
+          "value": false,
+          "metadata": {
+            "description": "AlwaysOn setting for the Function App. True or False."
+          }
+        },
+        "openAiName": {
+          "value": "aoai-test-01",
+          "metadata": {
+            "description": "Name of the Azure OpenAI resource."
+          }
+        },
+        "openAiSku": {
+          "value": "S0",
+          "metadata": {
+            "description": "SKU for the Azure OpenAI resource."
+          }
+        },
+        "aiSpeechName": {
+          "value": "speech-aoai-test-01",
+          "metadata": {
+            "description": "Name of the Azure AI Speech Services resource."
+          }
+        },
+        "aiSpeechSku": {
+          "value": "S0",
+          "metadata": {
+            "description": "SKU for the Azure AI Speech Services resource."
+          }
+        }
+    }
+}

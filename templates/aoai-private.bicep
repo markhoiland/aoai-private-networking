@@ -2,7 +2,7 @@
 param location string = 'northcentralus'
 
 @description('Name of the virtual network resource.')
-param virtualNetworkName string = 'vnet-aoai-test-02'
+param virtualNetworkName string = 'vnet-aoai-test-01'
 
 @description('Array of address blocks reserved for this virtual network, in CIDR notation.')
 param addressPrefixes array = [
@@ -28,10 +28,10 @@ param subnetName_ViFnc string = 'funcapp-vi'
 param subnetPrefix_ViFnc string = '10.1.2.0/24'
 
 @description('Name of the network security group.')
-param networkSecurityGroupName string = 'nsg-aoai-test-02'
+param networkSecurityGroupName string = 'nsg-aoai-test-01'
 
 @description('Name of the storage account.')
-param storageAccountName string = 'staoaitest02'
+param storageAccountName string = 'staoaitest01'
 
 @description('Access tier for the storage account.')
 @allowed([
@@ -66,19 +66,22 @@ param tagsByResource object = {
   'Microsoft.Web/sites': {
     environment: 'poc'
   }
+  'Microsoft.CognitiveServices/accounts': {
+    environment: 'poc'
+  }
 }
 /////Logic App Params/////
 @description('Name of the Login App.')
-param logicAppName string = 'logapp-aoai-test-02'
+param logicAppName string = 'logapp-aoai-test-01'
 
 @description('Name of the storage account for Logic and Function Apps.')
-param aspStorageAccountName string = 'staoaitestasp02'
+param aspStorageAccountName string = 'staoaitestasp01'
 
 @description('.NET Framework version.')
 param netFrameworkVersion string = 'v6.0'
 
 @description('Name of the hosting plan / server farm.')
-param hostingPlanName string = 'asplog-aoai-test-02'
+param hostingPlanName string = 'asplog-aoai-test-01'
 
 @description('Hosting Plan / Server Farm SKU.')
 param hostingPlanSku string = 'WorkflowStandard'
@@ -92,13 +95,13 @@ param vnetPrivatePortsCount int = 2
 
 /////Function App Params/////
 @description('Name of the Function App.')
-param funcAppName string = 'funcapp-aoai-test-02'
+param funcAppName string = 'funcapp-aoai-test-01'
 
 @description('Language and version for the language-specific worker process. For example, "Python|3.11".')
 param linuxFxVersion string = 'Python|3.11'
 
 @description('Name of the Function App hosting plan / server farm.')
-param hostingPlanNameFunc string = 'aspfnc-aoai-test-02'
+param hostingPlanNameFunc string = 'aspfnc-aoai-test-01'
 
 @description('Hosting Plan / Server Farm SKU for the Function App.')
 @allowed([
@@ -136,10 +139,17 @@ param funcAlwaysOn bool = false
 
 /////Azure OpenAI Params/////
 @description('Name of the Azure OpenAI resource.')
-param openAiName string = 'aoai-test-02a'
+param openAiName string = 'aoai-test-01'
 
 @description('SKU for the Azure OpenAI resource.')
 param openAiSku string = 'S0'
+
+/////Azure AI Speech Services Params/////
+@description('Name of the Azure AI Speech Services resource.')
+param aiSpeechName string = 'speech-aoai-test-01'
+
+@description('SKU for the Azure AI Speech Services resource.')
+param aiSpeechSku string = 'S0'
 
 var virtualNetworkId = virtualNetwork.id
 var subnetId_Pep = '${virtualNetworkId}/subnets/${subnetName_Pep}'
@@ -435,7 +445,7 @@ resource logicApp_site 'Microsoft.Web/sites@2018-11-01' = {
       netFrameworkVersion: netFrameworkVersion
     }
     clientAffinityEnabled: false
-    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', 'vnet-aoai-test-02', 'logapp-vi')
+    virtualNetworkSubnetId: subnetId_ViLog
     publicNetworkAccess: 'Disabled'
     vnetRouteAllEnabled: true
     httpsOnly: true
@@ -535,7 +545,7 @@ resource privateDnsZone_website_link 'Microsoft.Network/privateDnsZones/virtualN
 resource aspStorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: aspStorageAccountName
   location: location
-  tags: {}
+  tags: (contains(tagsByResource, 'Microsoft.Storage/storageAccounts') ? tagsByResource['Microsoft.Storage/storageAccounts'] : {})
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
@@ -553,7 +563,7 @@ resource funcApp_site 'Microsoft.Web/sites@2018-11-01' = {
   name: funcAppName
   kind: 'functionapp,linux'
   location: location
-  tags: {}
+  tags: (contains(tagsByResource, 'Microsoft.Web/sites') ? tagsByResource['Microsoft.Web/sites'] : {})
   properties: {
     name: funcAppName
     siteConfig: {
@@ -582,11 +592,14 @@ resource funcApp_site 'Microsoft.Web/sites@2018-11-01' = {
       alwaysOn: funcAlwaysOn
     }
     clientAffinityEnabled: false
-    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName_ViFnc)
+    virtualNetworkSubnetId: subnetId_ViFnc
     publicNetworkAccess: 'Disabled'
     vnetRouteAllEnabled: true
     httpsOnly: true
     serverFarmId: funcAppHostingPlan.id
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
   dependsOn: []
 }
@@ -595,7 +608,7 @@ resource funcAppHostingPlan 'Microsoft.Web/serverfarms@2018-11-01' = {
   name: hostingPlanNameFunc
   location: location
   kind: 'linux'
-  tags: {}
+  tags: (contains(tagsByResource, 'Microsoft.Web/sites') ? tagsByResource['Microsoft.Web/sites'] : {})
   properties: {
     name: hostingPlanNameFunc
     workerSize: hostingPlanWorkerSizeFunc
@@ -655,7 +668,7 @@ resource privateDnsZoneGroups_websiteFunc 'Microsoft.Network/privateEndpoints/pr
 resource openAi_account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
   name: openAiName
   location: location
-  tags: {}
+  tags: (contains(tagsByResource, 'Microsoft.CognitiveServices/accounts') ? tagsByResource['Microsoft.CognitiveServices/accounts'] : {})
   sku: {
     name: openAiSku
   }
@@ -668,6 +681,9 @@ resource openAi_account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
       virtualNetworkRules: []
       ipRules: []
     }
+  }
+  identity: {
+    type: 'SystemAssigned'
   }
   dependsOn: [
     virtualNetwork
@@ -733,5 +749,94 @@ resource privateDnsZone_openAiAccount_link 'Microsoft.Network/privateDnsZones/vi
   }
   dependsOn: [
     pep_openAi_account
+  ]
+}
+
+/////Azure AI Speech Services/////
+
+resource aiSpeech_account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
+  name: aiSpeechName
+  location: location
+  kind: 'SpeechServices'
+  tags: (contains(tagsByResource, 'Microsoft.CognitiveServices/accounts') ? tagsByResource['Microsoft.CognitiveServices/accounts'] : {})
+  sku: {
+    name: aiSpeechSku
+  }
+  properties: {
+    customSubDomainName: toLower(aiSpeechName)
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  dependsOn: [
+    virtualNetwork
+  ]
+}
+
+resource pep_aiSpeech_account 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+  name: 'pep-${aiSpeechName}'
+  location: location
+  properties: {
+    subnet: {
+      id: subnetId_Pep
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pepconn-${aiSpeechName}'
+        properties: {
+          privateLinkServiceId: aiSpeech_account.id
+          groupIds: [
+            'account'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZone_cogServAccount 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+  name: 'privatelink.cognitiveservices.azure.com'
+  location: 'global'
+  dependsOn: [
+    pep_aiSpeech_account
+  ]
+}
+
+resource privateDnsZoneGroups_cogServAccount 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: pep_aiSpeech_account
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink-cognitiveservices'
+        properties: {
+          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', 'privatelink.cognitiveservices.azure.com')
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    privateDnsZone_cogServAccount
+  ]
+}
+
+resource privateDnsZone_cogServAccount_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+  parent: privateDnsZone_cogServAccount
+  name: '${aiSpeechName}-link'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: virtualNetworkId
+    }
+    registrationEnabled: false
+  }
+  dependsOn: [
+    pep_aiSpeech_account
   ]
 }
