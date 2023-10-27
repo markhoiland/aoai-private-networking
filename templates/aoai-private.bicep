@@ -134,6 +134,13 @@ param numberOfWorkersFunc string = '1'
 @description('AlwaysOn setting for the Function App. True or False.')
 param funcAlwaysOn bool = false
 
+/////Azure OpenAI Params/////
+@description('Name of the Azure OpenAI resource.')
+param openAiName string = 'aoai-test-02a'
+
+@description('SKU for the Azure OpenAI resource.')
+param openAiSku string = 'S0'
+
 var virtualNetworkId = virtualNetwork.id
 var subnetId_Pep = '${virtualNetworkId}/subnets/${subnetName_Pep}'
 var subnetId_ViLog = '${virtualNetworkId}/subnets/${subnetName_ViLog}'
@@ -640,5 +647,91 @@ resource privateDnsZoneGroups_websiteFunc 'Microsoft.Network/privateEndpoints/pr
   }
   dependsOn: [
     privateDnsZone_website
+  ]
+}
+
+/////Azure OpenAI Resources/////
+
+resource openAi_account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
+  name: openAiName
+  location: location
+  tags: {}
+  sku: {
+    name: openAiSku
+  }
+  kind: 'OpenAI'
+  properties: {
+    customSubDomainName: toLower(openAiName)
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+  }
+  dependsOn: [
+    virtualNetwork
+  ]
+}
+
+resource pep_openAi_account 'Microsoft.Network/privateEndpoints@2021-02-01' = {
+  name: 'pep-${openAiName}'
+  location: location
+  properties: {
+    subnet: {
+      id: subnetId_Pep
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pepconn-${openAiName}'
+        properties: {
+          privateLinkServiceId: openAi_account.id
+          groupIds: [
+            'account'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource privateDnsZone_openAiAccount 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+  name: 'privatelink.openai.azure.com'
+  location: 'global'
+  dependsOn: [
+    pep_openAi_account
+  ]
+}
+
+resource privateDnsZoneGroups_openAiAccount 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: pep_openAi_account
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'privatelink-cognitiveservices'
+        properties: {
+          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', 'privatelink.openai.azure.com')
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    privateDnsZone_openAiAccount
+  ]
+}
+
+resource privateDnsZone_openAiAccount_link 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+  parent: privateDnsZone_openAiAccount
+  name: '${openAiName}-link'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: virtualNetworkId
+    }
+    registrationEnabled: false
+  }
+  dependsOn: [
+    pep_openAi_account
   ]
 }
