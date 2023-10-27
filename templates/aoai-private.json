@@ -25,18 +25,46 @@
                 "description": "Array of address blocks reserved for this virtual network, in CIDR notation."
             }
         },
-        "subnetName": {
+        "subnetName-Pep": {
             "type": "string",
             "defaultValue": "private-endpoint",
             "metadata": {
-                "description": "Name of the subnet for this virtual network."
+                "description": "Name of the private endpoint subnet for this virtual network."
             }
         },
-        "subnetPrefix": {
+        "subnetPrefix-Pep": {
             "type": "string",
             "defaultValue": "10.1.0.0/24",
             "metadata": {
-                "description": "Address block reserved for this subnet, in CIDR notation."
+                "description": "Address block reserved for the private endpoint subnet, in CIDR notation."
+            }
+        },
+        "subnetName-ViLog": {
+            "type": "string",
+            "defaultValue": "logapp-vi",
+            "metadata": {
+                "description": "Name of the Logic App VNet integration  subnet for this virtual network."
+            }
+        },
+        "subnetPrefix-ViLog": {
+            "type": "string",
+            "defaultValue": "10.1.1.0/24",
+            "metadata": {
+                "description": "Address block reserved for the Logic App VNet integration  subnet, in CIDR notation."
+            }
+        },
+        "subnetName-ViFnc": {
+            "type": "string",
+            "defaultValue": "funcapp-vi",
+            "metadata": {
+                "description": "Name of the Function App VNet integration subnet for this virtual network."
+            }
+        },
+        "subnetPrefix-ViFnc": {
+            "type": "string",
+            "defaultValue": "10.1.2.0/24",
+            "metadata": {
+                "description": "Address block reserved for the Function App VNet integration subnet, in CIDR notation."
             }
         },
         "networkSecurityGroupName": {
@@ -112,7 +140,7 @@
     },
     "variables": {
         "virtualNetworkId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnetId": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName'))]",
+        "subnetId-Pep": "[concat(variables('virtualNetworkId'), '/subnets/', parameters('subnetName-Pep'))]",
         "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
         "privateEndpointResourceId": "[resourceId('Microsoft.Network/privateEndpoints', concat('pep-', parameters('storageAccountName')))]"
     },
@@ -129,16 +157,39 @@
                 },
                 "subnets": [
                 {
-                    "name": "[parameters('subnetName')]",
+                    "name": "[parameters('subnetName-Pep')]",
                     "properties": {
                         "addressPrefixes": [
-                            "[parameters('subnetPrefix')]"
+                            "[parameters('subnetPrefix-Pep')]"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[variables('networkSecurityGroupId')]"
+                        }
+                    }
+                },
+                {
+                    "name": "[parameters('subnetName-ViLog')]",
+                    "properties": {
+                        "addressPrefixes": [
+                            "[parameters('subnetPrefix-ViLog')]"
+                        ],
+                        "networkSecurityGroup": {
+                            "id": "[variables('networkSecurityGroupId')]"
+                        }
+                    }
+                },
+                {
+                    "name": "[parameters('subnetName-ViFnc')]",
+                    "properties": {
+                        "addressPrefixes": [
+                            "[parameters('subnetPrefix-ViFnc')]"
                         ],
                         "networkSecurityGroup": {
                             "id": "[variables('networkSecurityGroupId')]"
                         }
                     }
                 }
+                
             ],
                 "enableDdosProtection": false,
                 "encryption": {
@@ -255,7 +306,7 @@
                 ],
                 "manualPrivateLinkServiceConnections": [],
                 "subnet": {
-                    "id": "[variables('subnetId')]"
+                    "id": "[variables('subnetId-Pep')]"
                 }
             },
             "tags": {},
@@ -292,7 +343,7 @@
         {
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
             "apiVersion": "2022-05-01",
-            "name": "[format('{0}/{1}', concat(parameters('storageAccountName'),'-storageblob'), 'default')]",
+            "name": "[parameters('storageAccountName')]",
             "properties": {
                 "privateDnsZoneConfigs": [
                     {

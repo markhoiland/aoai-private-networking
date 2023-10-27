@@ -1,0 +1,334 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "use32BitWorkerProcess": {
+            "type": "bool"
+        },
+        "ftpsState": {
+            "type": "string"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        "netFrameworkVersion": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "skuCode": {
+            "type": "string"
+        },
+        "workerSize": {
+            "type": "string"
+        },
+        "workerSizeId": {
+            "type": "string"
+        },
+        "numberOfWorkers": {
+            "type": "string"
+        },
+        "hostingPlanName": {
+            "type": "string"
+        },
+        "serverFarmResourceGroup": {
+            "type": "string"
+        },
+        "alwaysOn": {
+            "type": "bool"
+        },
+        "vnetPrivatePortsCount": {
+            "type": "int"
+        }
+    },
+    "variables": {
+        "inboundSubnetDeployment": "inboundSubnetDeployment",
+        "outboundSubnetDeployment": "outboundSubnetDeployment",
+        "storageSubnetDeployment": "storageSubnetDeployment",
+        "inboundPrivateDnsZoneName": "privatelink.azurewebsites.net",
+        "inboundPrivateDnsZoneARecordName": "inboundPrivateDnsZoneARecordName"
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('name')]",
+            "type": "Microsoft.Web/sites",
+            "kind": "functionapp,workflowapp",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[variables('outboundSubnetDeployment')]",
+                "[variables('inboundSubnetDeployment')]"
+            ],
+            "properties": {
+                "name": "[parameters('name')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~4"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "node"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "~18"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "logapp-aoai-test-02bb9d"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensionBundle__id",
+                            "value": "Microsoft.Azure.Functions.ExtensionBundle.Workflows"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensionBundle__version",
+                            "value": "[1.*, 2.0.0)"
+                        },
+                        {
+                            "name": "APP_KIND",
+                            "value": "workflowApp"
+                        }
+                    ],
+                    "cors": {},
+                    "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
+                    "ftpsState": "[parameters('ftpsState')]",
+                    "vnetPrivatePortsCount": "[parameters('vnetPrivatePortsCount')]",
+                    "netFrameworkVersion": "[parameters('netFrameworkVersion')]"
+                },
+                "clientAffinityEnabled": false,
+                "virtualNetworkSubnetId": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/rg-aoai-test-02/providers/Microsoft.Network/virtualNetworks/vnet-aoai-test-02/subnets/logapp-vi",
+                "publicNetworkAccess": "Disabled",
+                "vnetRouteAllEnabled": true,
+                "httpsOnly": true,
+                "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('location')]",
+            "kind": "",
+            "tags": {},
+            "dependsOn": [],
+            "properties": {
+                "name": "[parameters('hostingPlanName')]",
+                "workerSize": "[parameters('workerSize')]",
+                "workerSizeId": "[parameters('workerSizeId')]",
+                "numberOfWorkers": "[parameters('numberOfWorkers')]",
+                "maximumElasticWorkerCount": "20",
+                "zoneRedundant": false
+            },
+            "sku": {
+                "Tier": "[parameters('sku')]",
+                "Name": "[parameters('skuCode')]"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-07-01",
+            "name": "[variables('inboundSubnetDeployment')]",
+            "resourceGroup": "rg-aoai-test-02",
+            "subscriptionId": "a095d2d5-fd2c-403f-bb29-fad7cad5d098",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2020-07-01",
+                            "name": "vnet-aoai-test-02/private-endpoint",
+                            "properties": {
+                                "delegations": [],
+                                "serviceEndpoints": [],
+                                "provisioningState": "Succeeded",
+                                "addressPrefixes": [
+                                    "10.1.0.0/24"
+                                ],
+                                "networkSecurityGroup": {
+                                    "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/rg-aoai-test-02/providers/Microsoft.Network/networkSecurityGroups/nsg-aoai-test-02"
+                                },
+                                "ipConfigurations": [
+                                    {
+                                        "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/RG-AOAI-TEST-02/providers/Microsoft.Network/networkInterfaces/PEP-STAOAITEST02.NIC.7D25C2CA-8665-4E0A-9215-19D1032C7718/ipConfigurations/PRIVATEENDPOINTIPCONFIG.3738F364-F046-4806-8A10-2AEEE34C7DD0"
+                                    }
+                                ],
+                                "privateEndpoints": [
+                                    {
+                                        "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/RG-AOAI-TEST-02/providers/Microsoft.Network/privateEndpoints/PEP-STAOAITEST02"
+                                    }
+                                ],
+                                "purpose": "PrivateEndpoints",
+                                "privateEndpointNetworkPolicies": "Disabled",
+                                "privateLinkServiceNetworkPolicies": "Enabled"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-07-01",
+            "name": "[variables('outboundSubnetDeployment')]",
+            "resourceGroup": "rg-aoai-test-02",
+            "subscriptionId": "a095d2d5-fd2c-403f-bb29-fad7cad5d098",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2020-07-01",
+                            "name": "vnet-aoai-test-02/logapp-vi",
+                            "properties": {
+                                "delegations": [
+                                    {
+                                        "name": "delegation",
+                                        "properties": {
+                                            "serviceName": "Microsoft.Web/serverfarms"
+                                        }
+                                    }
+                                ],
+                                "serviceEndpoints": [
+                                    {
+                                        "service": "Microsoft.Storage"
+                                    }
+                                ],
+                                "provisioningState": "Succeeded",
+                                "addressPrefix": "10.1.1.0/24",
+                                "privateEndpointNetworkPolicies": "Disabled",
+                                "privateLinkServiceNetworkPolicies": "Enabled"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[variables('inboundSubnetDeployment')]"
+            ]
+        },
+        {
+            "apiVersion": "2021-02-01",
+            "name": "pep-logapp-aoai-test-02",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.Network/privateEndpoints",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', parameters('name'))]"
+            ],
+            "properties": {
+                "subnet": {
+                    "id": "/subscriptions/a095d2d5-fd2c-403f-bb29-fad7cad5d098/resourceGroups/rg-aoai-test-02/providers/Microsoft.Network/virtualNetworks/vnet-aoai-test-02/subnets/private-endpoint"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "pep-logapp-aoai-test-02",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Web/Sites', parameters('name'))]",
+                            "groupIds": [
+                                "sites"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[variables('inboundPrivateDnsZoneName')]",
+            "location": "global",
+            "dependsOn": [
+                "pep-logapp-aoai-test-02"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2020-03-01",
+            "name": "[concat('pep-logapp-aoai-test-02', '/', 'default')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "pep-logapp-aoai-test-02",
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('inboundPrivateDNSZoneName'))]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "[format('{0}-config', variables('inboundPrivateDnsZoneName'))]",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('inboundPrivateDnsZoneName'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "name": "[format('{0}/{1}', variables('inboundPrivateDnsZoneName'), format('{0}-link', parameters('name')))]",
+            "location": "global",
+            "dependsOn": [
+                "pep-logapp-aoai-test-02",
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('inboundPrivateDNSZoneName'))]"
+            ],
+            "properties": {
+                "virtualNetwork": {
+                    "id": "[resourceId('rg-aoai-test-02', 'Microsoft.Network/virtualNetworks', 'vnet-aoai-test-02')]"
+                },
+                "registrationEnabled": false
+            }
+        },
+        {
+            "apiVersion": "2022-05-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "minimumTlsVersion": "TLS1_2",
+                "defaultToOAuthAuthentication": true
+            }
+        }
+    ]
+}

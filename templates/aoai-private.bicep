@@ -1,133 +1,214 @@
-@description('Region where all resources will be deployed.')
+@description('Azure region for the deployment, resource group and resources.')
 param location string = 'northcentralus'
 
-@description('The name of the virtual network.')
-param virtualNetworkName string = 'vnet-aoai-test-01'
+@description('Name of the virtual network resource.')
+param virtualNetworkName string = 'vnet-aoai-test-02'
 
-@description('The address prefix for the virtual network.')
-param virtualNetworkAddressPrefix string = '10.0.0.0/16'
+@description('Array of address blocks reserved for this virtual network, in CIDR notation.')
+param addressPrefixes array = [
+  '10.1.0.0/16'
+]
 
-@description('Name of the subnet.')
-param subnetName string = 'private-endpoint-01'
+@description('Name of the private endpoint subnet for this virtual network.')
+param subnetName_Pep string = 'private-endpoint'
 
-@description('IP Address Prefix of the virtual network.')
-param subnetAddressPrefix string = '10.0.0.0/24'
+@description('Address block reserved for the private endpoint subnet, in CIDR notation.')
+param subnetPrefix_Pep string = '10.1.0.0/24'
 
-@description('The name of the OpenAI resource.')
-param openaiName string = 'aoai-test-01'
+@description('Name of the Logic App VNet integration  subnet for this virtual network.')
+param subnetName_ViLog string = 'logapp-vi'
 
-@description('The name of the storage account.')
-param storageAccountName string = 'staoaitest01'
+@description('Address block reserved for the Logic App VNet integration  subnet, in CIDR notation.')
+param subnetPrefix_ViLog string = '10.1.1.0/24'
 
-@description('The name of the Cognitive Services resource.')
-param cognitiveServicesName string = 'cog-aoai-test-01'
+@description('Name of the Function App VNet integration subnet for this virtual network.')
+param subnetName_ViFnc string = 'funcapp-vi'
 
-@description('The name of the Function App.')
-param functionAppName string = 'func-aoai-test-01'
+@description('Address block reserved for the Function App VNet integration subnet, in CIDR notation.')
+param subnetPrefix_ViFnc string = '10.1.2.0/24'
 
-@description('The name of the Logic App.')
-param logicAppName string = 'logapp-aoai-test-01'
+@description('Name of the network security group.')
+param networkSecurityGroupName string = 'nsg-aoai-test-02'
 
-var openaiPrivateEndpointName = 'pep-${openaiName}'
-var storageAccountPrivateEndpointName = 'pep-${storageAccountName}'
-var cognitiveServicesPrivateEndpointName = 'pep-${cognitiveServicesName}'
-var functionAppPrivateEndpointName = 'pep-${functionAppName}'
-var logicAppPrivateEndpointName = 'pep-${logicAppName}'
-var virtualNetworkSubnetName = 'default'
-var openaiSubnetName = 'openai'
-var storageAccountSubnetName = 'storage'
-var cognitiveServicesSubnetName = 'cognitiveservices'
-var functionAppSubnetName = 'functionapp'
-var logicAppSubnetName = 'logicapp'
-var virtualNetworkSubnetAddressPrefix = '${virtualNetworkAddressPrefix}/24'
-var openaiSubnetAddressPrefix = '10.0.1.0/24'
-var storageAccountSubnetAddressPrefix = '10.0.2.0/24'
-var cognitiveServicesSubnetAddressPrefix = '10.0.3.0/24'
-var functionAppSubnetAddressPrefix = '10.0.4.0/24'
-var logicAppSubnetAddressPrefix = '10.0.5.0/24'
+@description('Name of the storage account.')
+param storageAccountName string = 'staoaitest02'
+
+@description('Access tier for the storage account.')
+@allowed([
+  'Hot'
+  'Cool'
+])
+param storageAccessTier string = 'Hot'
+
+@description('Enable Hierarchical Namespace for the storage account.')
+param storageIsHnsEnabled bool = false
+
+@description('Enable SFTP for the storage account.')
+param storageIsSftpEnabled bool = false
+
+@description('Replication type for storage account.')
+param storageAccountType string = 'Standard_LRS'
+
+@description('Kind of storage account.')
+param storageKind string = 'StorageV2'
+
+@description('Optional tags for the resources.')
+param tagsByResource object = {
+  'Microsoft.Network/virtualNetworks': {
+    environment: 'poc'
+  }
+  'Microsoft.Network/networkSecurityGroups': {
+    environment: 'poc'
+  }
+  'Microsoft.Storage/storageAccounts': {
+    environment: 'poc'
+  }
+}
+
 var virtualNetworkId = virtualNetwork.id
-var virtualNetworkSubnetId = '${virtualNetworkId}/subnets/${virtualNetworkSubnetName}'
-var subnetId = '${virtualNetworkId}/subnets/${subnetName}'
-var openaiSubnetId = '${virtualNetworkId}/subnets/${openaiSubnetName}'
-var storageAccountSubnetId = '${virtualNetworkId}/subnets/${storageAccountSubnetName}'
-var cognitiveServicesSubnetId = '${virtualNetworkId}/subnets/${cognitiveServicesSubnetName}'
-var functionAppSubnetId = '${virtualNetworkId}/subnets/${functionAppSubnetName}'
-var logicAppSubnetId = '${virtualNetworkId}/subnets/${logicAppSubnetName}'
+var subnetId_Pep = '${virtualNetworkId}/subnets/${subnetName_Pep}'
+var networkSecurityGroupId = networkSecurityGroup.id
+var privateEndpointResourceId = pep_storageAccount.id
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: virtualNetworkName
   location: location
+  tags: (contains(tagsByResource, 'Microsoft.Network/virtualNetworks') ? tagsByResource['Microsoft.Network/virtualNetworks'] : {})
   properties: {
     addressSpace: {
-      addressPrefixes: [
-        virtualNetworkAddressPrefix
-      ]
+      addressPrefixes: addressPrefixes
     }
     subnets: [
       {
-        name: subnetName
+        name: subnetName_Pep
         properties: {
-          addressPrefix: subnetAddressPrefix
+          addressPrefixes: [
+            subnetPrefix_Pep
+          ]
+          networkSecurityGroup: {
+            id: networkSecurityGroupId
+          }
+        }
+      }
+      {
+        name: subnetName_ViLog
+        properties: {
+          addressPrefixes: [
+            subnetPrefix_ViLog
+          ]
+          networkSecurityGroup: {
+            id: networkSecurityGroupId
+          }
+        }
+      }
+      {
+        name: subnetName_ViFnc
+        properties: {
+          addressPrefixes: [
+            subnetPrefix_ViFnc
+          ]
+          networkSecurityGroup: {
+            id: networkSecurityGroupId
+          }
         }
       }
     ]
+    enableDdosProtection: false
+    encryption: {
+      enabled: false
+      enforcement: 'AllowUnencrypted'
+    }
   }
 }
 
-resource openai 'Microsoft.OpenAI/openais@2021-06-01-preview' = {
-  name: openaiName
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
+  name: networkSecurityGroupName
   location: location
-  sku: {
-    name: 'dav4'
-    tier: 'Standard'
-  }
+  tags: (contains(tagsByResource, 'Microsoft.Network/networkSecurityGroups') ? tagsByResource['Microsoft.Network/networkSecurityGroups'] : {})
   properties: {}
 }
 
-resource openaiName_openaiPrivateEndpoint 'Microsoft.OpenAI/openais/privateEndpoints@2021-02-01' = {
-  parent: openai
-  name: '${openaiPrivateEndpointName}'
-  location: location
-  properties: {
-    subnet: {
-      id: subnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'openai'
-        properties: {
-          privateLinkServiceId: openai.id
-          groupIds: [
-            'openai'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: storageAccountName
   location: location
-  sku: {
-    name: 'Standard_LRS'
-    tier: 'Standard'
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: true
+    defaultToOAuthAuthentication: false
+    accessTier: storageAccessTier
+    publicNetworkAccess: 'Disabled'
+    allowCrossTenantReplication: false
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Deny'
+      ipRules: []
+    }
+    dnsEndpointType: 'Standard'
+    isHnsEnabled: storageIsHnsEnabled
+    isSftpEnabled: storageIsSftpEnabled
+    encryption: {
+      keySource: 'Microsoft.Storage'
+      services: {
+        blob: {
+          enabled: true
+        }
+        file: {
+          enabled: true
+        }
+        table: {
+          enabled: true
+        }
+        queue: {
+          enabled: true
+        }
+      }
+      requireInfrastructureEncryption: false
+    }
   }
-  kind: 'StorageV2'
-  properties: {}
+  sku: {
+    name: storageAccountType
+  }
+  kind: storageKind
+  tags: (contains(tagsByResource, 'Microsoft.Storage/storageAccounts') ? tagsByResource['Microsoft.Storage/storageAccounts'] : {})
+  dependsOn: []
 }
 
-resource storageAccountName_storageAccountPrivateEndpoint 'Microsoft.Storage/storageAccounts/privateEndpoints@2021-02-01' = {
+resource storageAccountName_default 'Microsoft.Storage/storageAccounts/blobServices@2022-05-01' = {
   parent: storageAccount
-  name: storageAccountPrivateEndpointName
+  name: 'default'
+  properties: {
+    deleteRetentionPolicy: {
+      enabled: false
+    }
+    containerDeleteRetentionPolicy: {
+      enabled: false
+    }
+  }
+}
+
+resource Microsoft_Storage_storageAccounts_fileservices_storageAccountName_default 'Microsoft.Storage/storageAccounts/fileservices@2022-05-01' = {
+  parent: storageAccount
+  name: 'default'
+  properties: {
+    shareDeleteRetentionPolicy: {
+      enabled: false
+    }
+  }
+  dependsOn: [
+
+    storageAccountName_default
+  ]
+}
+
+resource pep_storageAccount 'Microsoft.Network/privateEndpoints@2023-04-01' = {
+  name: 'pep-${storageAccountName}'
   location: location
   properties: {
-    subnet: {
-      id: subnetId
-    }
     privateLinkServiceConnections: [
       {
-        name: 'storage'
+        name: 'pepconn-${storageAccountName}'
         properties: {
           privateLinkServiceId: storageAccount.id
           groupIds: [
@@ -136,185 +217,52 @@ resource storageAccountName_storageAccountPrivateEndpoint 'Microsoft.Storage/sto
         }
       }
     ]
-  }
-}
-
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2021-04-30-preview' = {
-  name: cognitiveServicesName
-  location: location
-  sku: {
-    name: 'S0'
-    tier: 'Standard'
-  }
-  kind: 'TextAnalytics'
-  properties: {}
-}
-
-resource cognitiveServicesName_cognitiveServicesPrivateEndpoint 'Microsoft.CognitiveServices/accounts/privateEndpoints@2021-02-01' = {
-  parent: cognitiveServices
-  name: cognitiveServicesPrivateEndpointName
-  location: location
-  properties: {
+    manualPrivateLinkServiceConnections: []
     subnet: {
-      id: subnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'cognitiveservices'
-        properties: {
-          privateLinkServiceId: cognitiveServices.id
-          groupIds: [
-            'cognitiveservices'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
-  name: functionAppName
-  location: location
-  kind: 'functionapp'
-  properties: {}
-}
-
-resource functionAppName_functionAppPrivateEndpoint 'Microsoft.Web/sites/privateEndpoints@2021-02-01' = {
-  parent: functionApp
-  name: '${functionAppPrivateEndpointName}'
-  location: location
-  properties: {
-    subnet: {
-      id: subnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'functionapp'
-        properties: {
-          privateLinkServiceId: functionApp.id
-          groupIds: [
-            'functionapp'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource logicApp 'Microsoft.Logic/workflows@2017-07-01' = {
-  name: logicAppName
-  location: location
-  properties: {}
-}
-
-resource logicAppName_logicAppPrivateEndpoint 'Microsoft.Logic/workflows/privateEndpoints@2021-02-01' = {
-  parent: logicApp
-  name: '${logicAppPrivateEndpointName}'
-  location: location
-  properties: {
-    subnet: {
-      id: subnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'logicapp'
-        properties: {
-          privateLinkServiceId: logicApp.id
-          groupIds: [
-            'logicapp'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource privatelink_openai_azure_com 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: string('privatelink.openai.azure.com')
-  location: 'global'
-  properties: {}
-}
-
-resource privatelink_openai_azure_com_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: privatelink_openai_azure_com
-  name: 'link_to_${toLower(virtualNetworkName)}'
-  location: 'global'
-  properties: {
-    virtualNetwork: {
-      id: virtualNetworkId
+      id: subnetId_Pep
     }
   }
-  dependsOn: [
-    privatelink_openai_azure_com
-
-  ]
+  tags: {}
 }
 
 resource privatelink_blob_core_windows_net 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: string('privatelink.blob.core.windows.net')
+  name: 'privatelink.blob.core.windows.net'
   location: 'global'
+  tags: {}
   properties: {}
+  dependsOn: [
+    pep_storageAccount
+  ]
 }
 
-resource privatelink_blob_core_windows_net_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: privatelink_blob_core_windows_net
-  name: 'link_to_${toLower(virtualNetworkName)}'
+resource privatelink_blob_core_windows_net_virtualNetworkId 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+  name: '${string('privatelink.blob.core.windows.net')}/${uniqueString(virtualNetworkId)}'
   location: 'global'
   properties: {
     virtualNetwork: {
       id: virtualNetworkId
     }
+    registrationEnabled: true
   }
   dependsOn: [
     privatelink_blob_core_windows_net
-
   ]
 }
 
-resource privatelink_search_windows_net 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: string('privatelink.search.windows.net')
-  location: 'global'
-  properties: {}
-}
-
-resource privatelink_search_windows_net_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: privatelink_search_windows_net
-  name: 'link_to_${toLower(virtualNetworkName)}'
-  location: 'global'
+resource Microsoft_Network_privateEndpoints_privateDnsZoneGroups_storageAccount 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = {
+  parent: pep_storageAccount
+  name: 'default'
   properties: {
-    virtualNetwork: {
-      id: virtualNetworkId
-    }
+    privateDnsZoneConfigs: [
+      {
+        name: 'config'
+        properties: {
+          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', 'privatelink.blob.core.windows.net')
+        }
+      }
+    ]
   }
   dependsOn: [
-    privatelink_search_windows_net
-
+    privatelink_blob_core_windows_net
   ]
 }
-
-resource privatelink_azurewebsites_net 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: string('privatelink.azurewebsites.net')
-  location: 'global'
-  properties: {}
-}
-
-resource privatelink_azurewebsites_net_link_to_virtualNetwork 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: privatelink_azurewebsites_net
-  name: 'link_to_${toLower(virtualNetworkName)}'
-  location: 'global'
-  properties: {
-    virtualNetwork: {
-      id: virtualNetworkId
-    }
-  }
-  dependsOn: [
-    privatelink_azurewebsites_net
-
-  ]
-}
-
-output openaiEndpoint string = reference('Microsoft.Network/privateEndpoints/${openaiPrivateEndpointName}').privateLinkServiceConnections[0].properties.privateEndpoint
-output storageAccountEndpoint string = reference('Microsoft.Network/privateEndpoints/${storageAccountPrivateEndpointName}').privateLinkServiceConnections[0].properties.privateEndpoint
-output cognitiveServicesEndpoint string = reference('Microsoft.Network/privateEndpoints/${cognitiveServicesPrivateEndpointName}').privateLinkServiceConnections[0].properties.privateEndpoint
-output functionAppEndpoint string = reference('Microsoft.Network/privateEndpoints/${functionAppPrivateEndpointName}').privateLinkServiceConnections[0].properties.privateEndpoint
-output logicAppEndpoint string = reference('Microsoft.Network/privateEndpoints/${logicAppPrivateEndpointName}').privateLinkServiceConnections[0].properties.privateEndpoint

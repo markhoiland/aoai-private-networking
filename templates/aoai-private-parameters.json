@@ -13,10 +13,10 @@
                 "10.0.0.0/16"
             ]
         },
-        "subnetName": {
+        "subnetName-Pep": {
             "value": "private-endpoint"
         },
-        "subnetPrefix": {
+        "subnetPrefix-Pep": {
             "value": "10.0.0.0/24"
         },
         "networkSecurityGroupName": {
